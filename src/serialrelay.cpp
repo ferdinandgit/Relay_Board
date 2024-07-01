@@ -2,7 +2,7 @@
 #include <string>
 #include <iostream>
 #include <cstdio>
-#include <serial/serial.h>
+#include <serialib.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -34,21 +34,23 @@ Serialrelay::Serialrelay(int id, int baudrate,const std::string &port){
 
 
 void Serialrelay::openCom(){
-    this->interface = std::make_unique<serial::Serial>(this->device, this->baudrate, serial::Timeout::simpleTimeout(1000)); 
-    sleep(1);
-    if(!this->interface->isOpen()){
+    this->boardinterface = std::make_unique<serialib>();
+    const char * device = this->device.c_str();
+    this->boardinterface->openDevice(device,this->baudrate); 
+    my_sleep(1);
+    if(!this->boardinterface->isDeviceOpen()){
         cout << "pas ouvert" << endl; 
     }
 }
 
 void Serialrelay::closeCom(){
-    this->interface->close();
-    if(this->interface->isOpen()){
+    this->boardinterface->closeDevice();
+    if(this->boardinterface->isDeviceOpen()){
         cout << "trow exep" << endl;
     }
 }
 
-void Serialrelay::bufferrxAdd(uint8_t elt){
+void Serialrelay::bufferrxAdd(char elt){
     int lenght = sizeof(this->bufferrx);
     for(int k = lenght-1; k<=0;k--){
         this->bufferrx[k+1]=this->bufferrx[k];
@@ -56,7 +58,7 @@ void Serialrelay::bufferrxAdd(uint8_t elt){
     this->bufferrx[0]=elt;
 }
 
-void Serialrelay::buffertxAdd(uint8_t elt){
+void Serialrelay::buffertxAdd(char elt){
     int lenght = sizeof(this->buffertx);
     for(int k = lenght-1; k<=0;k--){
         this->buffertx[k+1]=this->buffertx[k];
@@ -64,16 +66,16 @@ void Serialrelay::buffertxAdd(uint8_t elt){
     this->buffertx[0]=elt;
 }
 
-void Serialrelay::send(uint8_t data,unsigned long milliseconds){
+void Serialrelay::send(char data,unsigned long milliseconds){
         this->buffertxAdd(data);
-        size_t byte = this->interface->write(this->buffertx,1);
+        size_t byte = this->boardinterface->writeChar(this->buffertx[0]);
         my_sleep(milliseconds);
 }
 
 void Serialrelay::recieve(int nbyte){
     for(int k = 1;k<=nbyte;k++){
-        uint8_t tempbuffer[1];
-        this->interface->read(tempbuffer,1);
+        char tempbuffer[1];
+        this->boardinterface->readChar(tempbuffer);
         this->bufferrxAdd(tempbuffer[0]);
     }
 }

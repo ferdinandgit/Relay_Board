@@ -4,17 +4,8 @@ project(Seeit_Relay
   VERSION 1.0
 )
 
-
-include(FetchContent)
-
-FetchContent_Declare(
-  serial
-  GIT_REPOSITORY "https://github.com/wjwwood/serial.git"
-  GIT_TAG "1.2.1"
-)
-
-FetchContent_MakeAvailable(serial)
-FetchContent_GetProperties(serial SOURCE_DIR mylibrary_SOURCE_DIR)
+add_library(serial ${CMAKE_CURRENT_SOURCE_DIR}/src/serialib.cpp)
+target_include_directories(serial PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 
 file(GLOB_RECURSE SOURCES
@@ -27,6 +18,6 @@ target_sources(${PROJECT_NAME} PUBLIC ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC 
                           ${CMAKE_CURRENT_SOURCE_DIR}/include
-                          ${serial_SOURCE_DIR}/include)                       
+                          )                       
 
 target_link_libraries(${PROJECT_NAME} serial)

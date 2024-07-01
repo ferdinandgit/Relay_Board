@@ -1,5 +1,5 @@
 
-#include <serial/serial.h>
+#include <serialib.hpp>
 #include <memory>
 #include<string>
 
@@ -30,17 +30,18 @@ public:
     
     
 protected:
-    void send(uint8_t  data, unsigned long milliseconds);
+    void send(char  data, unsigned long milliseconds);
     void recieve(int nbyte);
-    void bufferrxAdd(uint8_t elt);
-    void buffertxAdd(uint8_t elt);
+    void bufferrxAdd(char elt);
+    void buffertxAdd(char elt);
     int id;
     int baudrate; 
     int relaynumber;
-    uint8_t buffertx [8];
-    uint8_t bufferrx [8]; 
+    char buffertx [8];
+    char bufferrx [8]; 
     std::string device; 
     relayboard board;
-    std::unique_ptr<serial::Serial> interface;
+    std::unique_ptr<serialib> boardinterface;
 };
+
 }
