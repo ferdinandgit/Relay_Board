@@ -14,9 +14,6 @@ typedef enum{
 }relayboard;
 
 
-
-
-
 class Serialrelay
 {
 
@@ -26,7 +23,7 @@ public:
     void closeCom();
     void initBoard(relayboard board);
     void setState(int commandarray[]);
-    int  getState();     
+    char  getState();     
     
     
 protected:

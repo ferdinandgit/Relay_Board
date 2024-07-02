@@ -1,34 +1,28 @@
-#include <string>
-#include <iostream>
-#include <cstdio>
-#include <serialrelay.hpp>
+#include <wx/wx.h>
 
+class MyApp : public wxApp
+{
+public:
+    virtual bool OnInit();
+};
 
-// OS Specific sleep
+class MyFrame : public wxFrame
+{
+public:
+    MyFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
+};
 
+wxIMPLEMENT_APP(MyApp);
 
+bool MyApp::OnInit()
+{
+    MyFrame *frame = new MyFrame("Hello Everyone!", wxDefaultPosition, wxDefaultSize);
+    frame->Show(true);
+    return true;
+}
 
-using std::string;
-using std::exception;
-using std::cout;
-using std::cerr;
-using std::endl;
-using relay::relayboard;
-
-
-int main(){
-    int commandon[8] = {0,0,0,0,0,0,1,1};
-    int commandoff[8] = {0,0,0,0,0,0,0,0};
-    relay::relayboard board = relay::usbrelay;
-    relay::Serialrelay relay(1,9600,"\\\\.\\COM3");
-    relay.openCom();
-    relay.initBoard(board);
-    while(true){
-    relay.setState(commandon);
-    Sleep(1000);
-    relay.setState(commandoff);
-    Sleep(1000);
-    }
-    relay.closeCom();
-    return 0;
+MyFrame::MyFrame(const wxString &title, const wxPoint &pos, const wxSize &size)
+    : wxFrame(NULL, wxID_ANY, title, pos, size)
+{
+    new wxStaticText(this, wxID_ANY, "Good Morning!"); // no need to delete - the parent will do it automatically
 }
