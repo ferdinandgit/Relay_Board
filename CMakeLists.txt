@@ -21,12 +21,16 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(wxWidgets)
 
 
+file(COPY  ${CMAKE_CURRENT_SOURCE_DIR}/ressources DESTINATION  ${CMAKE_CURRENT_SOURCE_DIR}/build)
+
 add_library(serial ${CMAKE_CURRENT_SOURCE_DIR}/src/serialib.cpp)
 target_include_directories(serial PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 
 file(GLOB_RECURSE SOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/mainframe.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/relayapp.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/controlpanel.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/serialrelay.cpp)
 
 
