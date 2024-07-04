@@ -3,6 +3,9 @@
 #include <wx/gbsizer.h>
 #include <wx/listctrl.h>
 
+
+
+
 MainFrame::MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title){
     CreatePanels();
     CreateControls();
@@ -46,7 +49,7 @@ void MainFrame::CreatePanels(){
     sizer->AddGrowableCol(0);
     sizer->AddGrowableCol(1);
     sizer->AddGrowableRow(2);
-    sizer->SetMinSize(FromDIP(wxSize(600,400)));
+    sizer->SetMinSize(FromDIP(wxSize(800,600)));
     this->mainpanel->SetSizer(sizer);
     mainSizer->Add(this->mainpanel, 1, wxEXPAND | wxALL, margin);
     this->SetSizerAndFit(mainSizer);
@@ -61,39 +64,81 @@ void MainFrame::CreateControls(){
     manualicon.LoadFile("iconmanual.bmp", wxBITMAP_TYPE_BMP);
     this->manualmodebutton = new wxBitmapButton(this->menupanel,manualmodebuttonId,manualicon, wxPoint(0,0),buttonsize, 0);
     wxBitmap programmericon;
-    programmericon.LoadFile("iconmanual.bmp", wxBITMAP_TYPE_BMP);
+    programmericon.LoadFile("prog.bmp", wxBITMAP_TYPE_BMP);
     this->progammermodebutton = new wxBitmapButton(this->menupanel,progammermodebuttonId,programmericon, wxPoint(buttonwidth,0),buttonsize, 0);
     wxBitmap testicon;
-    testicon.LoadFile("iconmanual.bmp", wxBITMAP_TYPE_BMP);
+    testicon.LoadFile("test.bmp", wxBITMAP_TYPE_BMP);
     this->testmodebutton = new wxBitmapButton(this->menupanel,testmodebuttonId,testicon, wxPoint(buttonwidth*2,0),buttonsize, 0);
     //manager panel control 
     wxBitmap addicon;
-    addicon.LoadFile("iconmanual.bmp", wxBITMAP_TYPE_BMP);
+    addicon.LoadFile("add.bmp", wxBITMAP_TYPE_BMP);
     this->addbutton = new wxBitmapButton(this->managerpanel,addbuttonId, addicon, wxPoint(0,0),buttonsize, 0);
     wxBitmap clearicon;
-    clearicon.LoadFile("iconmanual.bmp", wxBITMAP_TYPE_BMP);
-    this->clearbutton = new wxBitmapButton(this->managerpanel,clearbuttonId, addicon, wxPoint(buttonwidth,0),buttonsize, 0);
-    
+    clearicon.LoadFile("clear.bmp", wxBITMAP_TYPE_BMP);
+    this->clearbutton = new wxBitmapButton(this->managerpanel,clearbuttonId, clearicon, wxPoint(buttonwidth,0),buttonsize, 0);
+   
+    wxArrayString boardtypelist;
+    boardtypelist.Add(wxT("usb_relay"));
+    wxComboBox *boardtype = new wxComboBox(this->managerpanel, -1, wxT("type"), wxPoint(buttonwidth*2,0),wxSize(120,100),boardtypelist);
 
+    wxArrayString relaynumberlist;
+    relaynumberlist.Add(wxT("1"));
+    relaynumberlist.Add(wxT("2"));
+    relaynumberlist.Add(wxT("4"));
+    relaynumberlist.Add(wxT("8"));
+    wxComboBox *boarrelaynumber = new wxComboBox(this->managerpanel, -1, wxT("relaynumber"), wxPoint(buttonwidth*2+120,0),wxSize(120,100),relaynumberlist);
+
+    wxArrayString baudratelist;
+    baudratelist.Add(wxT("9600"));
+    baudratelist.Add(wxT("115200"));
+    wxComboBox *baudrate = new wxComboBox(this->managerpanel, -1, wxT("speed"), wxPoint(buttonwidth*2,22),wxSize(120,100),baudratelist);
+
+    wxArrayString portlist;
+    portlist.Add(wxT("COM1"));
+    portlist.Add(wxT("COM2"));
+    wxComboBox *port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2+120,22),wxSize(120,100),portlist);
+
+
+
+
+    //Relay panel ctrl 
     wxBoxSizer* sizerrelaypanel = new wxBoxSizer(wxHORIZONTAL);
     relaypanel->SetSizer(sizerrelaypanel);
     this->relaylist = new wxListCtrl(relaypanel, -1, wxDefaultPosition,wxDefaultSize, wxLC_REPORT|wxRAISED_BORDER|wxLC_VRULES);
     sizerrelaypanel->Add(relaylist, 1, wxGROW, 0);
     this->relaylist->InsertColumn(0, _("id"), wxLIST_FORMAT_LEFT, 30);
-    this->relaylist->InsertColumn(1, _("type"), wxLIST_FORMAT_LEFT, 80);
-    this->relaylist->InsertColumn(2, _("relay number"), wxLIST_FORMAT_LEFT, 130);
-    this->relaylist->InsertColumn(3, _("baudrate"), wxLIST_FORMAT_LEFT, 800);
-
-
-    // testing 
-
-    wxBoxSizer* siercontrolpanel;      
+    this->relaylist->InsertColumn(1, _("port"),wxLIST_FORMAT_LEFT,50);
+    this->relaylist->InsertColumn(2, _("type"), wxLIST_FORMAT_LEFT, 50);
+    this->relaylist->InsertColumn(3, _("relay number"), wxLIST_FORMAT_LEFT, 100);
+    this->relaylist->InsertColumn(4, _("baudrate"), wxLIST_FORMAT_LEFT, 800);
+   
+   
+          
 }
 
 
-/*wxArrayString strings;
-    strings.Add(wxT("1"));
-    strings.Add(wxT("2"));
-    strings.Add(wxT("3"));
-    strings.Add(wxT("4"));
-    wxComboBox *boardtype = new wxComboBox(this->managerpanel, -1, wxT("..."), wxPoint(buttonwidth*2,0),buttonsize, strings);*/
+void MainFrame::OnAdd(wxCommandEvent& event){
+
+}
+void MainFrame::OnClear(wxCommandEvent& event){
+
+}
+void MainFrame::OnManualMode(wxCommandEvent& event){
+
+}
+void MainFrame::OnTestMode(wxCommandEvent& event){
+
+}
+void MainFrame::OnProgrammerMode(wxCommandEvent& event){
+
+}
+
+
+// Event Table
+wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
+    EVT_BUTTON(addbuttonId, MainFrame::OnAdd)
+    EVT_BUTTON(clearbuttonId, MainFrame::OnClear)
+    EVT_BUTTON(manualmodebuttonId, MainFrame::OnManualMode)
+    EVT_BUTTON(addbuttonId, MainFrame::OnTestMode)
+    EVT_BUTTON(addbuttonId, MainFrame::OnProgrammerMode)
+wxEND_EVENT_TABLE()

@@ -5,6 +5,8 @@
 wxIMPLEMENT_APP(relayApp);
 
 
+
+
 bool relayApp::OnInit()
 {
     MainFrame *mainFrame = new MainFrame("Seeit Relay Controller");

@@ -1,6 +1,7 @@
 #pragma once
 #include<wx/wx.h>
 #include <wx/listctrl.h>
+#include <wx/textctrl.h>
 
 class MainFrame : public wxFrame
 {
@@ -28,7 +29,9 @@ private:
     wxBitmapButton *addbutton;
     wxBitmapButton *clearbutton;
     wxListCtrl *relaylist; 
-
+    wxComboBox *baudrate; 
+    wxComboBox *type;
+    wxDECLARE_EVENT_TABLE();
 };
 
 enum ButtonId {
@@ -38,3 +41,6 @@ enum ButtonId {
     progammermodebuttonId = wxID_LAST + 4,
     manualmodebuttonId = wxID_LAST + 5,
 };
+
+
+    
