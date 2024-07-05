@@ -31,6 +31,7 @@ file(GLOB_RECURSE SOURCES
             ${CMAKE_CURRENT_SOURCE_DIR}/src/mainframe.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/relayapp.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/controlpanel.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/drawingcanva.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/serialrelay.cpp)
 
 

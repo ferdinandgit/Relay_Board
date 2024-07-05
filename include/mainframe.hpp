@@ -2,6 +2,7 @@
 #include<wx/wx.h>
 #include <wx/listctrl.h>
 #include <wx/textctrl.h>
+#include <drawingcanva.hpp>
 
 class MainFrame : public wxFrame
 {
@@ -31,6 +32,7 @@ private:
     wxListCtrl *relaylist; 
     wxComboBox *baudrate; 
     wxComboBox *type;
+    DrawingCanva *canva;
     wxDECLARE_EVENT_TABLE();
 };
 

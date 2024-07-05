@@ -2,13 +2,18 @@
 #include <wx/wx.h>
 #include <wx/gbsizer.h>
 #include <wx/listctrl.h>
-
+#include <drawingcanva.hpp>
 
 
 
 MainFrame::MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title){
     CreatePanels();
     CreateControls();
+    //testing
+    wxSizer *controlpanelsizer = new wxBoxSizer(wxVERTICAL);
+    auto ouille = new DrawingCanva(0,controlpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    controlpanelsizer->Add(ouille,1,wxEXPAND | wxALL,0);
+    controlpanel->SetSizerAndFit(controlpanelsizer);
 }
 
 void MainFrame::CreatePanels(){
@@ -49,7 +54,7 @@ void MainFrame::CreatePanels(){
     sizer->AddGrowableCol(0);
     sizer->AddGrowableCol(1);
     sizer->AddGrowableRow(2);
-    sizer->SetMinSize(FromDIP(wxSize(800,600)));
+    sizer->SetMinSize(FromDIP(wxSize(1000,800)));
     this->mainpanel->SetSizer(sizer);
     mainSizer->Add(this->mainpanel, 1, wxEXPAND | wxALL, margin);
     this->SetSizerAndFit(mainSizer);
@@ -112,7 +117,7 @@ void MainFrame::CreateControls(){
     this->relaylist->InsertColumn(3, _("relay number"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(4, _("baudrate"), wxLIST_FORMAT_LEFT, 800);
    
-   
+
           
 }
 
@@ -124,12 +129,22 @@ void MainFrame::OnClear(wxCommandEvent& event){
 
 }
 void MainFrame::OnManualMode(wxCommandEvent& event){
+   
+    controlpanel->DestroyChildren();
+    
+    //wxSizer* controlpanelsizer = new wxBoxSizer(wxHORIZONTAL);
+    canva = new DrawingCanva(2,controlpanel, wxID_ANY, wxDefaultPosition,controlpanel->GetSize());
+    controlpanel->GetSizer()->Add(canva);
+    
 
 }
 void MainFrame::OnTestMode(wxCommandEvent& event){
+    this->controlpanel->DestroyChildren();
 
 }
 void MainFrame::OnProgrammerMode(wxCommandEvent& event){
+    this->controlpanel->DestroyChildren();
+
 
 }
 
@@ -139,6 +154,6 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_BUTTON(addbuttonId, MainFrame::OnAdd)
     EVT_BUTTON(clearbuttonId, MainFrame::OnClear)
     EVT_BUTTON(manualmodebuttonId, MainFrame::OnManualMode)
-    EVT_BUTTON(addbuttonId, MainFrame::OnTestMode)
-    EVT_BUTTON(addbuttonId, MainFrame::OnProgrammerMode)
+    EVT_BUTTON(testmodebuttonId, MainFrame::OnTestMode)
+    EVT_BUTTON(progammermodebuttonId, MainFrame::OnProgrammerMode)
 wxEND_EVENT_TABLE()
