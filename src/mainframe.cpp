@@ -3,17 +3,16 @@
 #include <wx/gbsizer.h>
 #include <wx/listctrl.h>
 #include <drawingcanva.hpp>
-
+#include <controlpanel.hpp>
 
 
 MainFrame::MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title){
     CreatePanels();
     CreateControls();
-    //testing
-    wxSizer *controlpanelsizer = new wxBoxSizer(wxVERTICAL);
-    auto ouille = new DrawingCanva(0,controlpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    controlpanelsizer->Add(ouille,1,wxEXPAND | wxALL,0);
-    controlpanel->SetSizerAndFit(controlpanelsizer);
+   /* wxSizer *controlpanelsizer = new wxBoxSizer(wxVERTICAL);
+    auto init = new DrawingCanva(0,controlpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    controlpanelsizer->Add(init,1,wxEXPAND | wxALL,0);
+    controlpanel->SetSizerAndFit(controlpanelsizer);*/
 }
 
 void MainFrame::CreatePanels(){
@@ -45,11 +44,12 @@ void MainFrame::CreatePanels(){
     //define relay panel 
     this->relaypanel = new wxPanel(this->mainpanel,wxID_ANY, wxDefaultPosition,initialsize);
     this->relaypanel->SetBackgroundColour(wxColour(100,100,100));
-    sizer->Add(this->relaypanel,items[2].first,items[2].second,wxEXPAND);
+    sizer->Add(this->relaypanel,items[2].first,items[2].second,wxEXPAND| wxALL,0);
     //define contorl panel
-    this->controlpanel = new wxPanel(this->mainpanel,wxID_ANY, wxDefaultPosition,initialsize);
+    this->controlpanel = new ControlPanel(this->mainpanel,wxID_ANY, wxDefaultPosition,initialsize);
     this->controlpanel->SetBackgroundColour(wxColour(100,100,100));
     sizer->Add(this->controlpanel,items[3].first,items[3].second,wxEXPAND);
+    this->controlpanel->InitControlPanel();
     //Sizer parameter for panel sizing 
     sizer->AddGrowableCol(0);
     sizer->AddGrowableCol(1);
@@ -84,24 +84,24 @@ void MainFrame::CreateControls(){
    
     wxArrayString boardtypelist;
     boardtypelist.Add(wxT("usb_relay"));
-    wxComboBox *boardtype = new wxComboBox(this->managerpanel, -1, wxT("type"), wxPoint(buttonwidth*2,0),wxSize(120,100),boardtypelist);
+    boardtype = new wxComboBox(this->managerpanel, -1, wxT("type"), wxPoint(buttonwidth*2,0),wxSize(120,100),boardtypelist);
 
     wxArrayString relaynumberlist;
     relaynumberlist.Add(wxT("1"));
     relaynumberlist.Add(wxT("2"));
     relaynumberlist.Add(wxT("4"));
     relaynumberlist.Add(wxT("8"));
-    wxComboBox *boarrelaynumber = new wxComboBox(this->managerpanel, -1, wxT("relaynumber"), wxPoint(buttonwidth*2+120,0),wxSize(120,100),relaynumberlist);
+    boardrelaynumber = new wxComboBox(this->managerpanel, -1, wxT("relaynumber"), wxPoint(buttonwidth*2+120,0),wxSize(120,100),relaynumberlist);
 
     wxArrayString baudratelist;
     baudratelist.Add(wxT("9600"));
     baudratelist.Add(wxT("115200"));
-    wxComboBox *baudrate = new wxComboBox(this->managerpanel, -1, wxT("speed"), wxPoint(buttonwidth*2,22),wxSize(120,100),baudratelist);
+    baudrate = new wxComboBox(this->managerpanel, -1, wxT("speed"), wxPoint(buttonwidth*2,22),wxSize(120,100),baudratelist);
 
     wxArrayString portlist;
     portlist.Add(wxT("COM1"));
     portlist.Add(wxT("COM2"));
-    wxComboBox *port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2+120,22),wxSize(120,100),portlist);
+    port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2+120,22),wxSize(120,100),portlist);
 
 
 
@@ -113,7 +113,7 @@ void MainFrame::CreateControls(){
     sizerrelaypanel->Add(relaylist, 1, wxGROW, 0);
     this->relaylist->InsertColumn(0, _("id"), wxLIST_FORMAT_LEFT, 30);
     this->relaylist->InsertColumn(1, _("port"),wxLIST_FORMAT_LEFT,50);
-    this->relaylist->InsertColumn(2, _("type"), wxLIST_FORMAT_LEFT, 50);
+    this->relaylist->InsertColumn(2, _("type"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(3, _("relay number"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(4, _("baudrate"), wxLIST_FORMAT_LEFT, 800);
    
@@ -123,24 +123,44 @@ void MainFrame::CreateControls(){
 
 
 void MainFrame::OnAdd(wxCommandEvent& event){
+   
+    wxString port = this->port->GetStringSelection();
+    wxString type = this->boardtype->GetStringSelection();
+    wxString baudrate = this->baudrate->GetStringSelection();
+    wxString boardrelaynumber = this->boardrelaynumber->GetStringSelection();
+
+    static int id = 1;
+    long itemIndex = relaylist->InsertItem(relaylist->GetItemCount(), wxString::Format("%d", id));
+    relaylist->SetItem(itemIndex, 1, port);
+    relaylist->SetItem(itemIndex, 2, type);
+    relaylist->SetItem(itemIndex, 3, boardrelaynumber);
+    relaylist->SetItem(itemIndex, 4, baudrate);
+    id++;
 
 }
 void MainFrame::OnClear(wxCommandEvent& event){
-
+    long itemIndex = relaylist->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (itemIndex != -1)
+    {
+        relaylist->DeleteItem(itemIndex);
+    }
+    else
+    {
+        wxMessageBox("No board to remove", "Error", wxOK | wxICON_ERROR);
+    }
 }
 void MainFrame::OnManualMode(wxCommandEvent& event){
-   
-    controlpanel->DestroyChildren();
-    
-    //wxSizer* controlpanelsizer = new wxBoxSizer(wxHORIZONTAL);
-    canva = new DrawingCanva(2,controlpanel, wxID_ANY, wxDefaultPosition,controlpanel->GetSize());
-    controlpanel->GetSizer()->Add(canva);
+    this->controlpanel->CreateManuallayout(2);
+    this->controlpanel->CreateManualControls(2);
     
 
 }
 void MainFrame::OnTestMode(wxCommandEvent& event){
     this->controlpanel->DestroyChildren();
 
+    auto canva = new DrawingCanva(1,controlpanel, wxID_ANY, wxDefaultPosition,controlpanel->GetSize());
+
+    controlpanel->GetSizer()->Add(canva);
 }
 void MainFrame::OnProgrammerMode(wxCommandEvent& event){
     this->controlpanel->DestroyChildren();

@@ -3,6 +3,8 @@
 #include <wx/listctrl.h>
 #include <wx/textctrl.h>
 #include <drawingcanva.hpp>
+#include <controlpanel.hpp>
+
 
 class MainFrame : public wxFrame
 {
@@ -23,7 +25,7 @@ private:
     wxPanel *menupanel;
     wxPanel *managerpanel;
     wxPanel *relaypanel;
-    wxPanel *controlpanel;
+    ControlPanel *controlpanel;
     wxBitmapButton *manualmodebutton;
     wxBitmapButton *progammermodebutton;
     wxBitmapButton *testmodebutton;
@@ -31,8 +33,9 @@ private:
     wxBitmapButton *clearbutton;
     wxListCtrl *relaylist; 
     wxComboBox *baudrate; 
-    wxComboBox *type;
-    DrawingCanva *canva;
+    wxComboBox *boardtype;
+    wxComboBox *boardrelaynumber;
+    wxComboBox *port; 
     wxDECLARE_EVENT_TABLE();
 };
 
