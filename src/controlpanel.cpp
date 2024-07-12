@@ -22,6 +22,58 @@ void ControlPanel::CreateManuallayout(int relaynumber){
     this->GetSizer()->Add(canva,1,wxEXPAND);
 }
 
+void ControlPanel::CreateProgrammerlayout(){
+    this->DestroyChildren();
+    programmerpanel = new wxPanel(this,wxID_ANY,wxDefaultPosition,this->GetSize());
+    programmerpanel->SetBackgroundColour(wxColour(100,100,100));
+    this->GetSizer()->Add(programmerpanel,1,wxEXPAND,0);
+   
+}
+
+void ControlPanel::CreateProgrammerControls(){
+    wxBoxSizer* programctrlsizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* topcontrols = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* bottomcontrols = new wxBoxSizer(wxHORIZONTAL); 
+
+    program = new wxListCtrl(programmerpanel, -1, wxDefaultPosition,wxDefaultSize, wxLC_REPORT|wxRAISED_BORDER|wxLC_VRULES);
+    program->InsertColumn(0,"Id",wxLIST_ALIGN_LEFT,90);
+    for(int k = 1;k<=16;k++){
+        program->InsertColumn(k,"K"+std::to_string(k),wxLIST_ALIGN_LEFT,40);
+    }
+
+    wxButton* save = new wxButton(programmerpanel ,wxID_ANY,"Save",wxDefaultPosition,wxSize(50,20));
+    wxButton* open = new wxButton(programmerpanel ,wxID_ANY,"Open",wxDefaultPosition,wxSize(50,20));
+    wxCheckBox* loop = new wxCheckBox(programmerpanel,wxID_ANY,"Loop",wxDefaultPosition,wxSize(20,20));
+    wxCheckBox* sequence = new wxCheckBox(programmerpanel,wxID_ANY,"Sequence",wxDefaultPosition,wxSize(20,20));
+    wxButton* Add = new wxButton(programmerpanel ,wxID_ANY,"Add",wxDefaultPosition,wxSize(50,20));
+    wxButton* Clear = new wxButton(programmerpanel ,wxID_ANY,"Clear",wxDefaultPosition,wxSize(50,20));
+    wxButton* start = new wxButton(programmerpanel ,wxID_ANY,"Start",wxDefaultPosition,wxSize(100,100));
+    wxButton* stop = new wxButton(programmerpanel ,wxID_ANY,"Stop",wxDefaultPosition,wxSize(100,100));
+    
+    topcontrols->Add(open,wxALIGN_LEFT);
+    topcontrols->AddSpacer(20);
+    topcontrols->Add(save,wxALIGN_LEFT);
+    topcontrols->AddSpacer(20);
+    topcontrols->Add(loop, wxALL,5);
+    topcontrols->AddStretchSpacer(20);
+    topcontrols->Add(sequence,wxALL,5);
+    topcontrols->Add(Add,wxALIGN_RIGHT,5);
+    topcontrols->AddSpacer(20);
+    topcontrols->Add(Clear,wxALIGN_RIGHT);
+
+    bottomcontrols->Add(start,wxALIGN_CENTER,5);
+    bottomcontrols->AddSpacer(20); 
+    bottomcontrols->Add(stop,wxALIGN_CENTER,5);
+
+    programctrlsizer->Add(topcontrols,0,wxEXPAND|wxTOP|wxLEFT|wxRIGHT,20);
+    programctrlsizer->Add(program,1, wxGROW|wxALL,20);
+    programctrlsizer->Add(bottomcontrols,0,wxEXPAND|wxBOTTOM|wxLEFT|wxRIGHT,20);
+    programmerpanel->SetSizerAndFit(programctrlsizer);
+
+
+    Layout();
+}
+
 void ControlPanel::CreateManualControls(int relaynumber){ 
     switch(relaynumber){
         case 1:
@@ -34,7 +86,6 @@ void ControlPanel::CreateManualControls(int relaynumber){
             controlssizer->AddSpacer(40);
             controlssizer->Add(this->k1,0,wxALL|wxALIGN_CENTER,0);
             controlssizer->AddStretchSpacer(1);
-            this->canva->SetSizerAndFit(controlssizer);
             Layout();
         }
         break;

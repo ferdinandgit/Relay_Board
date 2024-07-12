@@ -163,7 +163,8 @@ void MainFrame::OnTestMode(wxCommandEvent& event){
     controlpanel->GetSizer()->Add(canva);
 }
 void MainFrame::OnProgrammerMode(wxCommandEvent& event){
-    this->controlpanel->DestroyChildren();
+        controlpanel->CreateProgrammerlayout();
+        controlpanel->CreateProgrammerControls();
 
 
 }
