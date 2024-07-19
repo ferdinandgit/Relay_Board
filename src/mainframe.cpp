@@ -150,8 +150,8 @@ void MainFrame::OnClear(wxCommandEvent& event){
     }
 }
 void MainFrame::OnManualMode(wxCommandEvent& event){
-    this->controlpanel->CreateManuallayout(2);
-    this->controlpanel->CreateManualControls(2);
+    this->controlpanel->CreateManuallayout(8);
+    this->controlpanel->CreateManualControls(8);
     
 
 }

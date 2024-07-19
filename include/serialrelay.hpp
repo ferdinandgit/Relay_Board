@@ -23,7 +23,7 @@ public:
     void closeCom();
     void initBoard(relayboard board);
     void setState(int commandarray[]);
-    char  getState();     
+    char getState();     
     
     
 protected:

@@ -31,6 +31,16 @@ void DrawingCanva::OnPaint(wxPaintEvent &event){
                 DrawBoard(this->canvatype,this->lenght,this->width,gc);
             }
         break;
+        case 4:
+            if(gc){
+                DrawBoard(this->canvatype,this->lenght,this->width,gc);
+            }
+        break;
+        case 8:
+            if(gc){
+                DrawBoard(this->canvatype,this->lenght,this->width,gc);
+            }
+        break;
     }
 }       
 
@@ -75,4 +85,16 @@ void DrawingCanva::DrawBoard(int relaynumber,int gclenght, int gcwidth ,wxGraphi
         break; 
 
     }
+}
+
+int DrawingCanva::getstep(){
+    return step;
+}
+
+int DrawingCanva::getrelaylenght(){
+    return relaylenght;
+}
+
+int DrawingCanva::getrelaywidth(){
+    return relaywidth;
 }

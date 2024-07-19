@@ -23,6 +23,7 @@ public:
     void AddBoard(Serialrelay board);
     void RmBoard(Serialrelay board);
     void InitControlPanel(); 
+    void BoardControlsbuild();
 
 private:
     DrawingCanva* canva;
@@ -61,7 +62,6 @@ private:
     wxStaticText* statek14;
     wxStaticText* statek15;
     wxStaticText* statek16;
-
 };
 
 enum ControlpanelButtonId{

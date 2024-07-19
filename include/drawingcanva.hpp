@@ -8,6 +8,9 @@ class DrawingCanva : public wxPanel{
     public:
        
         DrawingCanva(int type,wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size);
+        int getstep();
+        int getrelaylenght();
+        int getrelaywidth(); 
     private:
         void OnPaint(wxPaintEvent &event);
         void DrawRelay(wxPoint pos,wxSize size,wxString id,wxGraphicsContext* gc);

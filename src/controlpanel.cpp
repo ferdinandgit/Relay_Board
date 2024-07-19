@@ -4,6 +4,7 @@
 #include <wx/listctrl.h>
 #include <drawingcanva.hpp>
 
+
 ControlPanel::ControlPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size): wxPanel(parent, id, pos, size){
     this->SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
@@ -18,7 +19,7 @@ void ControlPanel::InitControlPanel(){
 
 void ControlPanel::CreateManuallayout(int relaynumber){
     this->DestroyChildren();
-    this->canva = new DrawingCanva(2,this, wxID_ANY, wxDefaultPosition,this->GetSize());
+    this->canva = new DrawingCanva(relaynumber,this, wxID_ANY, wxDefaultPosition,this->GetSize());
     this->GetSizer()->Add(canva,1,wxEXPAND);
 }
 
@@ -91,26 +92,18 @@ void ControlPanel::CreateManualControls(int relaynumber){
         break;
         case 2:
         {
+            int panelwidth = canva->getrelaywidth()+canva->getstep()/2;
+            int panellenght = canva->getrelaylenght()/2+canva->getstep()/2;
             wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);
-            this->k1 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
-            this->k2 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
-            this->statek1 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20));
-            this->statek2 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20));
-           
-            wxGridBagSizer *frame = new wxGridBagSizer();
-            
-            std::vector<std::pair<wxGBPosition,wxGBSpan>> items =  {
-                {{0,0},{1,1}},
-                {{1,0},{1,1}},
-                {{0,1},{1,1}},
-                {{1,1},{1,1}}
-                 };
-    
-            frame->Add(this->statek1,items[0].first,items[0].second,wxBOTTOM|wxRIGHT||wxALIGN_BOTTOM|wxALIGN_RIGHT,20);
-            frame->Add(this->statek2,items[1].first,items[1].second,wxTOP|wxRIGHT|wxALIGN_TOP|wxALIGN_RIGHT,20);
-            frame->Add(this->k1,items[2].first,items[2].second,wxBOTTOM|wxLEFT|wxALIGN_BOTTOM|wxALIGN_LEFT,15);
-            frame->Add(this->k2,items[3].first,items[3].second,wxTOP|wxLEFT|wxALIGN_TOP|wxALIGN_LEFT,15);
-           
+            k1 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k2 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            statek1 = new wxStaticText(this->canva ,k2Id,"OFF",wxPoint(100,100),wxSize(20,20));
+            statek2 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20));
+            wxGridSizer *frame = new wxGridSizer(2,2,30,10);
+            frame->Add(statek1,wxALIGN_CENTRE);
+            frame->Add(k1,wxALIGN_CENTRE);
+            frame->Add(statek2,wxALIGN_CENTRE);
+            frame->Add(k2,wxALIGN_CENTRE);
             controlssizer->AddStretchSpacer(1);
             controlssizer->Add(frame,0,wxALIGN_CENTER);
             this->canva->SetSizerAndFit(controlssizer);
@@ -119,10 +112,101 @@ void ControlPanel::CreateManualControls(int relaynumber){
         }
         break;
         case 4:
+        {
+            int panelwidth = canva->getrelaywidth()+canva->getstep()/2;
+            int panellenght = canva->getrelaylenght()/2+canva->getstep()/2;
+            wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);
+            k1 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k2 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k3 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k4 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            statek1 = new wxStaticText(this->canva ,k2Id,"OFF",wxPoint(100,100),wxSize(20,20));
+            statek2 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20));
+            statek3 = new wxStaticText(this->canva ,k2Id,"OFF",wxPoint(100,100),wxSize(20,20));
+            statek4 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20));
+            wxGridSizer *frame = new wxGridSizer(4,2,30,10);
+            frame->Add(statek1,wxALIGN_CENTRE);
+            frame->Add(k1,wxALIGN_CENTRE);
+            frame->Add(statek2,wxALIGN_CENTRE);
+            frame->Add(k2,wxALIGN_CENTRE);
+            frame->Add(statek3,wxALIGN_CENTRE);
+            frame->Add(k3,wxALIGN_CENTRE);
+            frame->Add(statek4,wxALIGN_CENTRE);
+            frame->Add(k4,wxALIGN_CENTRE);
+            controlssizer->AddStretchSpacer(1);
+            controlssizer->Add(frame,0,wxALIGN_CENTER);
+            this->canva->SetSizerAndFit(controlssizer);
+            controlssizer->AddStretchSpacer(1);
+            Layout();
+        }
         break;
         case 8:
+        {
+            int panelwidth = canva->getrelaywidth()+canva->getstep()/2;
+            int panellenght = canva->getrelaylenght()/2+canva->getstep()/2;
+            wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);
+            wxGridSizer *frame1 = new wxGridSizer(4,2,30,10);
+            wxGridSizer *frame2 = new wxGridSizer(4,2,30,10);
+            k1 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k2 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k3 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k4 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k5 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k6 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k7 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            k8 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+            statek1 = new wxStaticText(this->canva ,k2Id,"OFF",wxPoint(100,100),wxSize(20,20));
+            statek2 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20));
+            statek3 = new wxStaticText(this->canva ,k2Id,"OFF",wxPoint(100,100),wxSize(20,20));
+            statek4 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20));
+            statek5 = new wxStaticText(this->canva ,k2Id,"OFF",wxPoint(100,100),wxSize(20,20));
+            statek6 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20));
+            statek7 = new wxStaticText(this->canva ,k2Id,"OFF",wxPoint(100,100),wxSize(20,20));
+            statek8 = new wxStaticText(this->canva ,k2Id,"ON",wxPoint(100,100),wxSize(20,20)); 
+            frame1->Add(statek1,wxALIGN_CENTRE);
+            frame1->Add(k1,wxALIGN_CENTRE);
+            frame1->Add(statek2,wxALIGN_CENTRE);
+            frame1->Add(k2,wxALIGN_CENTRE);
+            frame1->Add(statek3,wxALIGN_CENTRE);
+            frame1->Add(k3,wxALIGN_CENTRE);
+            frame1->Add(statek4,wxALIGN_CENTRE);
+            frame1->Add(k4,wxALIGN_CENTRE);
+            frame2->Add(statek5,wxALIGN_CENTRE);
+            frame2->Add(k5,wxALIGN_CENTRE);
+            frame2->Add(statek6,wxALIGN_CENTRE);
+            frame2->Add(k6,wxALIGN_CENTRE);
+            frame2->Add(statek7,wxALIGN_CENTRE);
+            frame2->Add(k7,wxALIGN_CENTRE);
+            frame2->Add(statek8,wxALIGN_CENTRE);
+            frame2->Add(k8,wxALIGN_CENTRE);
+            controlssizer->AddStretchSpacer(1);
+            controlssizer->Add(frame1,0,wxALIGN_CENTER);
+            controlssizer->AddSpacer(20);
+            controlssizer->Add(frame2,0,wxALIGN_CENTER);
+            controlssizer->AddStretchSpacer(1);
+            this->canva->SetSizerAndFit(controlssizer);
+            Layout();
+        }
         break;
         case 16:
+        int columns = 2;
+        int rows = 8;
+         
+        std::vector<wxButton*> relaytoggle = {k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12,k13,k14,k15,k16};
+        std::vector<wxStaticText*> relaystatus = {statek1,statek2,statek3,statek4,statek5,statek6,statek7,statek8,statek9,statek10,statek11,statek12,statek13,statek14,statek15,statek16};
+        
+        int panelwidth = canva->getrelaywidth()+canva->getstep()/2;
+        int panellenght = canva->getrelaylenght()/2+canva->getstep()/2;
+        wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);
+
+
+        
+        
+        
+        
+        
+        
         break;
     }
 }
+
