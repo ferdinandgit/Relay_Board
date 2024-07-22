@@ -4,14 +4,14 @@
 #include <cstdio>
 #include <serialib.hpp>
 
+
 #ifdef _WIN32
 #include <windows.h>
 #else
 #include <unistd.h>
 #endif
 
-using relay::Serialrelay;
-using relay::relayboard;
+
 using std::string;
 using std::cerr;
 using std::cout;
@@ -25,18 +25,32 @@ void my_sleep(unsigned long milliseconds) {
 #endif
 }
 
+ 
+boardinfo usbrelay  = {USBRELAY, 9600}; 
+boardinfo usbbrelay = {USBBRELAY,9600}; 
+boardinfo usbmrelay = {USBMRELAY,9600}; 
 
-Serialrelay::Serialrelay(int id, int baudrate,const std::string &port){
+Serialrelay::Serialrelay(int id,relayboard board,const std::string &port){
     this->id = id;
-    this->baudrate = baudrate;
     this->device = port;
+    switch(board){
+        case USBRELAY:
+            this->boardinfo=usbrelay;
+        break;
+        case USBBRELAY:
+            this->boardinfo=usbbrelay;
+        break;
+        case USBMRELAY: 
+            this->boardinfo=usbmrelay;
+        break;  
+    }
 };
 
 
 void Serialrelay::openCom(){
     this->boardinterface = std::make_unique<serialib>();
     const char * device = this->device.c_str();
-    this->boardinterface->openDevice(device,this->baudrate); 
+    this->boardinterface->openDevice(device,boardinfo.baudrate); 
     my_sleep(1);
     if(!this->boardinterface->isDeviceOpen()){
         cout << "pas ouvert" << endl; 
@@ -80,16 +94,30 @@ void Serialrelay::recieve(int nbyte){
     }
 }
 
+int Serialrelay::getRelayNumber(){
+    return relaynumber;
+}
 
-void Serialrelay::initBoard(relayboard board){
-    this->board = board;
-    switch(board){
+int Serialrelay::getSpeed(){
+    return boardinfo.baudrate;
+}
+
+std::string Serialrelay::getPort(){
+    return device;
+}
+
+int Serialrelay::getId(){
+    return id;
+}
+
+void Serialrelay::initBoard(){
+    switch(boardinfo.boardtype){
         /*
         USB-Relay-02,04,08 init protcol 
         ->send 0x50 for ident
         ->receive (0xad --> 2 relayboard) or (0xab --> 4 relayboard) or (0xac --> 8 relayboard) 
         */
-        case 1:
+        case USBRELAY:
             this->send(0x50,200);
             this->recieve(1);
             uint8_t data = this->bufferrx[0];
@@ -125,12 +153,12 @@ void Serialrelay::initBoard(relayboard board){
 }
 
  void Serialrelay::setState(int commandarray[]){
-    switch (this->board)
+    switch (boardinfo.boardtype)
     {
         /*
         USB-Relay-02,04,08 control protocol
         */
-        case 1:
+        case USBRELAY:
             uint8_t com = !commandarray[this->relaynumber-1];
             for(int k=this->relaynumber-2;k>=0;k--){
                 if(commandarray[k]==0){
@@ -149,6 +177,27 @@ void Serialrelay::initBoard(relayboard board){
     }
  }
 
+std::vector<std::string> scanBoard(){
+    std::vector<std::string> portlist;
+    std::string device_name;
+    serialib* device = new  serialib();
+    for (int i=1;i<99;i++){
+        // Check for Windows COM port
+        #if defined (_WIN32) || defined( _WIN64)
+            device_name = "\\\\.\\COM"+std::to_string(i);
+        #endif
 
+        // Check for Linux port
+        #ifdef __linux__
+            device_name = "/dev/ttyACM"+std::to_string(i-1);
+         #endif
+
+        if (device->openDevice(device_name.c_str(),115200)==1){
+            portlist.push_back(device_name); 
+            device->closeDevice();
+        }
+    }
+    return portlist; 
+}
 
 

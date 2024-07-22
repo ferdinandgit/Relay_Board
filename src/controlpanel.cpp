@@ -210,3 +210,14 @@ void ControlPanel::CreateManualControls(int relaynumber){
     }
 }
 
+void ControlPanel::AddBoard(Serialrelay* board){
+    openboards.push_back(board);
+}
+
+std::vector<Serialrelay*> ControlPanel::GetOpenBoards(){
+    return openboards;
+}
+
+void ControlPanel::RmBoard(int id){
+    openboards[id] = NULL;
+}

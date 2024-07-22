@@ -5,7 +5,7 @@
 #include <drawingcanva.hpp>
 #include <wx/listctrl.h>
 
-using relay::Serialrelay;
+
 class ControlPanel : public wxPanel {
 
 public:
@@ -20,8 +20,9 @@ public:
     void CreateProgrammerlayout();
     void CreateProgrammerControls();
     void CreateProgrammerevent();
-    void AddBoard(Serialrelay board);
-    void RmBoard(Serialrelay board);
+    std::vector<Serialrelay*> GetOpenBoards();
+    void AddBoard(Serialrelay* board);
+    void RmBoard(int id);
     void InitControlPanel(); 
     void BoardControlsbuild();
 
@@ -29,7 +30,7 @@ private:
     DrawingCanva* canva;
     wxPanel* programmerpanel;
     wxListCtrl* program;
-    std::vector<Serialrelay> boards;
+    std::vector<Serialrelay*> openboards;
     wxButton* k1;
     wxButton* k2;
     wxButton* k3;

@@ -4,7 +4,7 @@
 #include <wx/textctrl.h>
 #include <drawingcanva.hpp>
 #include <controlpanel.hpp>
-
+#include <wx/timer.h>
 
 class MainFrame : public wxFrame
 {
@@ -19,8 +19,9 @@ private:
     void OnManualMode(wxCommandEvent& event);
     void OnTestMode(wxCommandEvent& event);
     void OnProgrammerMode(wxCommandEvent& event);
+    void OnTimer(wxTimerEvent& event);
     
-
+    wxTimer *refreshtimer;
     wxPanel *mainpanel;
     wxPanel *menupanel;
     wxPanel *managerpanel;
@@ -39,12 +40,13 @@ private:
     wxDECLARE_EVENT_TABLE();
 };
 
-enum ButtonId {
+enum EltId {
     clearbuttonId = wxID_LAST + 1,
     addbuttonId = wxID_LAST + 2,
     testmodebuttonId = wxID_LAST + 3,
     progammermodebuttonId = wxID_LAST + 4,
     manualmodebuttonId = wxID_LAST + 5,
+    timerid = wxID_LAST + 6,
 };
 
 

@@ -4,15 +4,18 @@
 #include <wx/listctrl.h>
 #include <drawingcanva.hpp>
 #include <controlpanel.hpp>
+#include <serialrelay.hpp>
+#include <wx/timer.h>
 
+
+static int id = 0; 
 
 MainFrame::MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title){
     CreatePanels();
     CreateControls();
-   /* wxSizer *controlpanelsizer = new wxBoxSizer(wxVERTICAL);
-    auto init = new DrawingCanva(0,controlpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    controlpanelsizer->Add(init,1,wxEXPAND | wxALL,0);
-    controlpanel->SetSizerAndFit(controlpanelsizer);*/
+
+    refreshtimer = new wxTimer(managerpanel,timerid);
+    refreshtimer->Start(1000);
 }
 
 void MainFrame::CreatePanels(){
@@ -83,7 +86,10 @@ void MainFrame::CreateControls(){
     this->clearbutton = new wxBitmapButton(this->managerpanel,clearbuttonId, clearicon, wxPoint(buttonwidth,0),buttonsize, 0);
    
     wxArrayString boardtypelist;
-    boardtypelist.Add(wxT("usb_relay"));
+    std::vector<std::string> boardref = {"USB-RELAY","USBB-RELAY","USBM-RELAY"};
+    for(auto ref : boardref){
+        boardtypelist.Add(wxString(ref));
+    }
     boardtype = new wxComboBox(this->managerpanel, -1, wxT("type"), wxPoint(buttonwidth*2,0),wxSize(120,100),boardtypelist);
 
     wxArrayString relaynumberlist;
@@ -91,17 +97,19 @@ void MainFrame::CreateControls(){
     relaynumberlist.Add(wxT("2"));
     relaynumberlist.Add(wxT("4"));
     relaynumberlist.Add(wxT("8"));
+    relaynumberlist.Add(wxT("16"));
     boardrelaynumber = new wxComboBox(this->managerpanel, -1, wxT("relaynumber"), wxPoint(buttonwidth*2+120,0),wxSize(120,100),relaynumberlist);
 
-    wxArrayString baudratelist;
-    baudratelist.Add(wxT("9600"));
-    baudratelist.Add(wxT("115200"));
-    baudrate = new wxComboBox(this->managerpanel, -1, wxT("speed"), wxPoint(buttonwidth*2,22),wxSize(120,100),baudratelist);
 
     wxArrayString portlist;
-    portlist.Add(wxT("COM1"));
-    portlist.Add(wxT("COM2"));
-    port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2+120,22),wxSize(120,100),portlist);
+    std::vector<std::string> devicelist = scanBoard();
+    for(auto device : devicelist){
+        #if defined (_WIN32) || defined( _WIN64)
+            device = device.substr(4,device.length());
+        #endif
+        portlist.Add(wxString(device));
+    }
+    port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2,22),wxSize(120,100),portlist);
 
 
 
@@ -117,39 +125,77 @@ void MainFrame::CreateControls(){
     this->relaylist->InsertColumn(3, _("relay number"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(4, _("baudrate"), wxLIST_FORMAT_LEFT, 800);
    
+    
 
           
 }
 
 
+
+//Event Command
+
 void MainFrame::OnAdd(wxCommandEvent& event){
-   
+    
+    relayboard boardtype; 
     wxString port = this->port->GetStringSelection();
     wxString type = this->boardtype->GetStringSelection();
-    wxString baudrate = this->baudrate->GetStringSelection();
-    wxString boardrelaynumber = this->boardrelaynumber->GetStringSelection();
 
-    static int id = 1;
+    for(auto openedboard : controlpanel->GetOpenBoards()){
+        if(openedboard!=NULL){
+            if( wxString(openedboard->getPort()) == port){
+                wxMessageBox("Board already connected", "Error", wxOK | wxICON_ERROR);
+                return;   
+            }
+        }
+    }
+
+    if(type ==  wxString("USB-RELAY")){
+        boardtype = USBRELAY;
+    }
+    else if(type == wxString("USBM-RELAY")){
+        boardtype = USBMRELAY;
+    }
+    else if(type == wxString("USBB-RELAY")){
+        boardtype = USBBRELAY;
+    }
+    else{
+        wxMessageBox("Please select a board", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    wxString boardrelaynumber = this->boardrelaynumber->GetStringSelection();
+    Serialrelay* board = new Serialrelay(id,boardtype,port.ToStdString());
+    board->openCom();
+    board->initBoard();
+    controlpanel->AddBoard(board);
     long itemIndex = relaylist->InsertItem(relaylist->GetItemCount(), wxString::Format("%d", id));
     relaylist->SetItem(itemIndex, 1, port);
     relaylist->SetItem(itemIndex, 2, type);
-    relaylist->SetItem(itemIndex, 3, boardrelaynumber);
-    relaylist->SetItem(itemIndex, 4, baudrate);
+    relaylist->SetItem(itemIndex, 3, wxString(std::to_string(board->getRelayNumber())));
+    relaylist->SetItem(itemIndex, 4, wxString(std::to_string(board->getSpeed())));
     id++;
 
 }
+
 void MainFrame::OnClear(wxCommandEvent& event){
     long itemIndex = relaylist->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
     if (itemIndex != -1)
     {
+        int deletedid = wxAtoi(relaylist->GetItemText(itemIndex));
         relaylist->DeleteItem(itemIndex);
+        
+    controlpanel->GetOpenBoards()[deletedid]->closeCom();
+    controlpanel->RmBoard(deletedid);
+
     }
     else
     {
         wxMessageBox("No board to remove", "Error", wxOK | wxICON_ERROR);
     }
 }
+
 void MainFrame::OnManualMode(wxCommandEvent& event){
+
     this->controlpanel->CreateManuallayout(8);
     this->controlpanel->CreateManualControls(8);
     
@@ -169,6 +215,21 @@ void MainFrame::OnProgrammerMode(wxCommandEvent& event){
 
 }
 
+void MainFrame::OnTimer(wxTimerEvent& event){
+    int buttonwidth = 75;
+    int buttonhight = 75;
+    auto buttonsize = wxSize(75,75);
+    wxArrayString portlist;
+    std::vector<std::string> devicelist = scanBoard();
+    for(auto device : devicelist){
+        #if defined (_WIN32) || defined( _WIN64)
+            device = device.substr(4,device.length());
+        #endif
+        portlist.Add(wxString(device));
+    }
+    port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2,22),wxSize(120,100),portlist);
+    
+}
 
 // Event Table
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
@@ -177,4 +238,5 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_BUTTON(manualmodebuttonId, MainFrame::OnManualMode)
     EVT_BUTTON(testmodebuttonId, MainFrame::OnTestMode)
     EVT_BUTTON(progammermodebuttonId, MainFrame::OnProgrammerMode)
+    EVT_TIMER(timerid, MainFrame::OnTimer)
 wxEND_EVENT_TABLE()

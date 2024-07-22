@@ -1,44 +1,59 @@
 
+#pragma once
 #include <serialib.hpp>
 #include <memory>
-#include<string>
+#include <string>
+#include <vector>
 
 
 
 using std::string;
 
-namespace relay{
+
 
 typedef enum{
-    usbrelay = 1,
+    USBRELAY = 1,
+    USBMRELAY = 2,
+    USBBRELAY = 3
 }relayboard;
+
+typedef struct{
+    relayboard boardtype;
+    int baudrate;
+}boardinfo; 
 
 
 class Serialrelay
 {
 
 public:
-    Serialrelay(int id, int baudrate,const string& port);
+    
+    Serialrelay(int id,relayboard board,const string& port);
     void openCom();  
     void closeCom();
-    void initBoard(relayboard board);
+    void initBoard();
     void setState(int commandarray[]);
-    char getState();     
+    char getState();
+    int getType();
+    int getSpeed();
+    int getId();
+    std::string getPort();
+    int getRelayNumber();
+ 
     
-    
-protected:
+private:
+
     void send(char  data, unsigned long milliseconds);
     void recieve(int nbyte);
     void bufferrxAdd(char elt);
     void buffertxAdd(char elt);
     int id;
-    int baudrate; 
+    boardinfo boardinfo;
     int relaynumber;
+    std::string device; 
     char buffertx [8];
     char bufferrx [8]; 
-    std::string device; 
-    relayboard board;
     std::unique_ptr<serialib> boardinterface;
 };
 
-}
+std::vector<std::string> scanBoard();
