@@ -12,14 +12,14 @@ ControlPanel::ControlPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
 void ControlPanel::InitControlPanel(){
     this->SetBackgroundColour(wxColour(100,100,100));
     wxSizer *controlpanelsizer = new wxBoxSizer(wxVERTICAL);
-    auto init = new DrawingCanva(0,this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    auto init = new DrawingCanva(0,NOBOARD,this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     controlpanelsizer->Add(init,1,wxEXPAND | wxALL,0);
     this->SetSizerAndFit(controlpanelsizer);
 }
 
 void ControlPanel::CreateManuallayout(int relaynumber,relayboard board){
     this->DestroyChildren();
-    this->canva = new DrawingCanva(relaynumber,this, wxID_ANY, wxDefaultPosition,this->GetSize());
+    this->canva = new DrawingCanva(relaynumber,board,this, wxID_ANY, wxDefaultPosition,this->GetSize());
     this->GetSizer()->Add(canva,1,wxEXPAND);
 }
 
@@ -96,11 +96,13 @@ void ControlPanel::Relay1Controls(relayboard board){
     wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);
     this->k1 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
     this->statek1 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    UpdateState();
     controlssizer->AddStretchSpacer(1);
     controlssizer->Add(this->statek1,0,wxALL|wxALIGN_CENTER,0);
     controlssizer->AddSpacer(40);
     controlssizer->Add(this->k1,0,wxALL|wxALIGN_CENTER,0);
     controlssizer->AddStretchSpacer(1);
+    this->canva->SetSizerAndFit(controlssizer);
     Layout();
 }
 
@@ -112,6 +114,7 @@ void ControlPanel::Relay2Controls(relayboard board){
     k2 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
     statek1 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
     statek2 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    UpdateState();
     wxGridSizer *frame = new wxGridSizer(2,2,30,10);
     frame->Add(statek1,wxALIGN_CENTRE);
     frame->Add(k1,wxALIGN_CENTRE);
@@ -136,6 +139,7 @@ void ControlPanel::Relay4Controls(relayboard board){
     statek2 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
     statek3 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
     statek4 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    UpdateState();
     wxGridSizer *frame = new wxGridSizer(4,2,30,10);
     frame->Add(statek1,wxALIGN_CENTRE);
     frame->Add(k1,wxALIGN_CENTRE);
@@ -173,23 +177,49 @@ void ControlPanel::Relay8Controls(relayboard board){
     statek5 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
     statek6 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
     statek7 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
-    statek8 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20)); 
-    frame1->Add(statek1,wxALIGN_CENTRE);
-    frame1->Add(k1,wxALIGN_CENTRE);
-    frame1->Add(statek2,wxALIGN_CENTRE);
-    frame1->Add(k2,wxALIGN_CENTRE);
-    frame1->Add(statek3,wxALIGN_CENTRE);
-    frame1->Add(k3,wxALIGN_CENTRE);
-    frame1->Add(statek4,wxALIGN_CENTRE);
-    frame1->Add(k4,wxALIGN_CENTRE);
-    frame2->Add(statek5,wxALIGN_CENTRE);
-    frame2->Add(k5,wxALIGN_CENTRE);
-    frame2->Add(statek6,wxALIGN_CENTRE);
-    frame2->Add(k6,wxALIGN_CENTRE);
-    frame2->Add(statek7,wxALIGN_CENTRE);
-    frame2->Add(k7,wxALIGN_CENTRE);
-    frame2->Add(statek8,wxALIGN_CENTRE);
-    frame2->Add(k8,wxALIGN_CENTRE);
+    statek8 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    UpdateState();
+    std::vector<wxStaticText*> relaystatus = {statek1,statek2,statek3,statek4,statek5,statek6,statek7,statek8};
+    std::vector<wxButton*> relaybutton = {k1,k2,k3,k4,k5,k6,k7,k8};
+    std::vector<int> usbrelayorderframe1 = {7,6,5,4};
+    std::vector<int> usbmrelayorderframe1 = {3,2,1,0};
+    std::vector<int> usbbrelayorderframe1 = {3,2,1,0};
+    std::vector<int> usbrelayorderframe2 = {3,2,1,0};
+    std::vector<int> usbmrelayorderframe2 = {4,5,6,7};
+    std::vector<int> usbbrelayorderframe2 = {3,2,1,0};
+    switch(board){
+        case USBRELAY:
+            for(int pos : usbrelayorderframe1){
+                frame1->Add(relaystatus[pos],wxALIGN_CENTER);
+                frame1->Add(relaybutton[pos],wxALIGN_CENTER);
+            }
+        for(int pos : usbrelayorderframe2){
+                frame2->Add(relaystatus[pos],wxALIGN_CENTER);
+                frame2->Add(relaybutton[pos],wxALIGN_CENTER);
+            }
+        break;
+        case USBMRELAY:
+             for(int pos : usbmrelayorderframe1){
+                frame1->Add(relaystatus[pos],wxALIGN_CENTER);
+                frame1->Add(relaybutton[pos],wxALIGN_CENTER);
+            }
+        for(int pos : usbmrelayorderframe2){
+                frame2->Add(relaystatus[pos],wxALIGN_CENTER);
+                frame2->Add(relaybutton[pos],wxALIGN_CENTER);
+            }
+        break;
+        case USBBRELAY:
+        for(int pos : usbbrelayorderframe1){
+                frame1->Add(relaystatus[pos],wxALIGN_CENTER);
+                frame1->Add(relaybutton[pos],wxALIGN_CENTER);
+            }
+        for(int pos : usbbrelayorderframe2){
+                frame2->Add(relaystatus[pos],wxALIGN_CENTER);
+                frame2->Add(relaybutton[pos],wxALIGN_CENTER);
+            }
+        break;
+
+    }
     controlssizer->AddStretchSpacer(1);
     controlssizer->Add(frame1,0,wxALIGN_CENTER);
     controlssizer->AddSpacer(20);

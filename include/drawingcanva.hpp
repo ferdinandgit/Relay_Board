@@ -1,13 +1,13 @@
 #pragma once 
 #include <wx/wx.h>
 #include <string>
-
+#include <serialrelay.hpp>
 
 
 class DrawingCanva : public wxPanel{
     public:
        
-        DrawingCanva(int type,wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size);
+        DrawingCanva(int type,relayboard boardtype,wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size);
         int getstep();
         int getrelaylenght();
         int getrelaywidth(); 
@@ -20,5 +20,7 @@ class DrawingCanva : public wxPanel{
         int width;
         int step = 10;
         int relaylenght = 120;
-        int relaywidth = 70; 
+        int relaywidth = 70;
+        relayboard board; 
+
 };

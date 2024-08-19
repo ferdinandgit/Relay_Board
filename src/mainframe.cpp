@@ -172,7 +172,27 @@ void MainFrame::OnAdd(wxCommandEvent& event){
 
 void MainFrame::OnClear(wxCommandEvent& event){
     long itemIndex = relaylist->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-    if (itemIndex != -1){
+    if(itemIndex != -1 & manual == 1){
+        int deletedid = wxAtoi(relaylist->GetItemText(itemIndex));
+        relaylist->DeleteItem(itemIndex);   
+        controlpanel->GetOpenBoards()[deletedid]->closeCom();
+        controlpanel->RmBoard(deletedid);
+        long itemIndex = relaylist->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+        if(itemIndex != -1){
+            int id = wxAtoi(relaylist->GetItemText(relaylist->GetTopItem(), 0));
+            Serialrelay* activeboard = controlpanel->GetOpenBoards()[id];
+            relayboard boardtype = activeboard->getType();
+            int relaynumber = activeboard-> getRelayNumber();
+            controlpanel->AssignToBoard(id);
+            controlpanel->CreateManuallayout(relaynumber,boardtype);
+            controlpanel->CreateManualControls(relaynumber,boardtype);
+        }
+        else{
+            controlpanel->CreateManuallayout(0,NOBOARD);
+            controlpanel->CreateManualControls(0,NOBOARD);
+        }   
+    }
+    else if(itemIndex != -1){
         int deletedid = wxAtoi(relaylist->GetItemText(itemIndex));
         relaylist->DeleteItem(itemIndex);   
         controlpanel->GetOpenBoards()[deletedid]->closeCom();
@@ -198,7 +218,7 @@ void MainFrame::OnManualMode(wxCommandEvent& event){
         controlpanel->CreateManualControls(relaynumber,boardtype);
     }
     else{
-        controlpanel->CreateManuallayout(1,NOBOARD);
+        controlpanel->CreateManuallayout(0,NOBOARD);
         controlpanel->CreateManualControls(0,NOBOARD);
     }
 }
@@ -208,7 +228,7 @@ void MainFrame::OnTestMode(wxCommandEvent& event){
     programmer=1;
     test=0;
     this->controlpanel->DestroyChildren();
-    auto canva = new DrawingCanva(1,controlpanel, wxID_ANY, wxDefaultPosition,controlpanel->GetSize());
+    auto canva = new DrawingCanva(0,NOBOARD,controlpanel, wxID_ANY, wxDefaultPosition,controlpanel->GetSize());
     controlpanel->GetSizer()->Add(canva);
 }
 
