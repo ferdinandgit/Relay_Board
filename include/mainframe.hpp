@@ -20,7 +20,12 @@ private:
     void OnTestMode(wxCommandEvent& event);
     void OnProgrammerMode(wxCommandEvent& event);
     void OnTimer(wxTimerEvent& event);
-    
+    void DoubleClickItem(wxListEvent& event); 
+
+    int manual = 1;
+    int programmer =0;
+    int test = 0;
+
     wxTimer *refreshtimer;
     wxPanel *mainpanel;
     wxPanel *menupanel;
@@ -47,6 +52,7 @@ enum EltId {
     progammermodebuttonId = wxID_LAST + 4,
     manualmodebuttonId = wxID_LAST + 5,
     timerid = wxID_LAST + 6,
+    listctrlid = wxID_LAST +7,
 };
 
 

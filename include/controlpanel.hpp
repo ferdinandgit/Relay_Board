@@ -11,8 +11,8 @@ class ControlPanel : public wxPanel {
 public:
 
     ControlPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size);
-    void CreateManuallayout(int relaynumber);
-    void CreateManualControls(int relaynumber);
+    void CreateManuallayout(int relaynumber,relayboard board);
+    void CreateManualControls(int relaynumber,relayboard board);
     void CreateManualevent();
     void CreateTestlayout();
     void CreateTestControls();
@@ -25,8 +25,36 @@ public:
     void RmBoard(int id);
     void InitControlPanel(); 
     void BoardControlsbuild();
+    void AssignToBoard(int id);
+    
+     
 
 private:
+
+    void Relay1Controls(relayboard board);
+    void Relay2Controls(relayboard board);
+    void Relay4Controls(relayboard board);
+    void Relay8Controls(relayboard board);
+    void Relay16Contols(relayboard board);
+
+    void UpdateState();
+    void OnK1(wxCommandEvent &event);
+    void OnK2(wxCommandEvent &event);
+    void OnK3(wxCommandEvent &event);
+    void OnK4(wxCommandEvent &event);
+    void OnK5(wxCommandEvent &event);
+    void OnK6(wxCommandEvent &event);
+    void OnK7(wxCommandEvent &event);
+    void OnK8(wxCommandEvent &event);
+    void OnK9(wxCommandEvent &event);
+    void OnK10(wxCommandEvent &event);
+    void OnK11(wxCommandEvent &event);
+    void OnK12(wxCommandEvent &event);
+    void OnK13(wxCommandEvent &event);
+    void OnK14(wxCommandEvent &event);
+    void OnK15(wxCommandEvent &event);
+    void OnK16(wxCommandEvent &event);
+    Serialrelay* activeboard; 
     DrawingCanva* canva;
     wxPanel* programmerpanel;
     wxListCtrl* program;
@@ -63,6 +91,7 @@ private:
     wxStaticText* statek14;
     wxStaticText* statek15;
     wxStaticText* statek16;
+    wxDECLARE_EVENT_TABLE();
 };
 
 enum ControlpanelButtonId{
@@ -81,5 +110,5 @@ enum ControlpanelButtonId{
     k13Id = wxID_LAST + 18,
     k14Id = wxID_LAST + 19,
     k15Id = wxID_LAST + 20,
-    k16Id = wxID_LAST + 20,
+    k16Id = wxID_LAST + 21,
 };

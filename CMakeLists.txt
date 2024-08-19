@@ -36,7 +36,6 @@ file(GLOB_RECURSE SOURCES
             )
 
 
-
 if(APPLE)
     # create bundle on apple compiles
     add_executable(main MACOSX_BUNDLE ${SOURCES})
@@ -55,3 +54,4 @@ target_include_directories(main PUBLIC
                           )                       
 
 target_link_libraries(main PRIVATE wxcore wxnet serial)
+

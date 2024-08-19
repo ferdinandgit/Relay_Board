@@ -117,17 +117,13 @@ void MainFrame::CreateControls(){
     //Relay panel ctrl 
     wxBoxSizer* sizerrelaypanel = new wxBoxSizer(wxHORIZONTAL);
     relaypanel->SetSizer(sizerrelaypanel);
-    this->relaylist = new wxListCtrl(relaypanel, -1, wxDefaultPosition,wxDefaultSize, wxLC_REPORT|wxRAISED_BORDER|wxLC_VRULES);
+    this->relaylist = new wxListCtrl(relaypanel,listctrlid, wxDefaultPosition,wxDefaultSize, wxLC_REPORT|wxRAISED_BORDER|wxLC_VRULES);
     sizerrelaypanel->Add(relaylist, 1, wxGROW, 0);
     this->relaylist->InsertColumn(0, _("id"), wxLIST_FORMAT_LEFT, 30);
     this->relaylist->InsertColumn(1, _("port"),wxLIST_FORMAT_LEFT,50);
     this->relaylist->InsertColumn(2, _("type"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(3, _("relay number"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(4, _("baudrate"), wxLIST_FORMAT_LEFT, 800);
-   
-    
-
-          
 }
 
 
@@ -135,10 +131,10 @@ void MainFrame::CreateControls(){
 //Event Command
 
 void MainFrame::OnAdd(wxCommandEvent& event){
-    
     relayboard boardtype; 
     wxString port = this->port->GetStringSelection();
     wxString type = this->boardtype->GetStringSelection();
+    wxString relaynumber = this->boardrelaynumber->GetStringSelection();
 
     for(auto openedboard : controlpanel->GetOpenBoards()){
         if(openedboard!=NULL){
@@ -148,7 +144,6 @@ void MainFrame::OnAdd(wxCommandEvent& event){
             }
         }
     }
-
     if(type ==  wxString("USB-RELAY")){
         boardtype = USBRELAY;
     }
@@ -162,9 +157,8 @@ void MainFrame::OnAdd(wxCommandEvent& event){
         wxMessageBox("Please select a board", "Error", wxOK | wxICON_ERROR);
         return;
     }
-
     wxString boardrelaynumber = this->boardrelaynumber->GetStringSelection();
-    Serialrelay* board = new Serialrelay(id,boardtype,port.ToStdString());
+    Serialrelay* board = new Serialrelay(id,boardtype,port.ToStdString(),wxAtoi(relaynumber));
     board->openCom();
     board->initBoard();
     controlpanel->AddBoard(board);
@@ -174,19 +168,15 @@ void MainFrame::OnAdd(wxCommandEvent& event){
     relaylist->SetItem(itemIndex, 3, wxString(std::to_string(board->getRelayNumber())));
     relaylist->SetItem(itemIndex, 4, wxString(std::to_string(board->getSpeed())));
     id++;
-
 }
 
 void MainFrame::OnClear(wxCommandEvent& event){
     long itemIndex = relaylist->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-    if (itemIndex != -1)
-    {
+    if (itemIndex != -1){
         int deletedid = wxAtoi(relaylist->GetItemText(itemIndex));
-        relaylist->DeleteItem(itemIndex);
-        
-    controlpanel->GetOpenBoards()[deletedid]->closeCom();
-    controlpanel->RmBoard(deletedid);
-
+        relaylist->DeleteItem(itemIndex);   
+        controlpanel->GetOpenBoards()[deletedid]->closeCom();
+        controlpanel->RmBoard(deletedid);
     }
     else
     {
@@ -195,24 +185,39 @@ void MainFrame::OnClear(wxCommandEvent& event){
 }
 
 void MainFrame::OnManualMode(wxCommandEvent& event){
-
-    this->controlpanel->CreateManuallayout(8);
-    this->controlpanel->CreateManualControls(8);
-    
-
+    manual=1;
+    programmer=0;
+    test=0;
+    if(relaylist->GetItemCount() > 0){
+        int id = wxAtoi(relaylist->GetItemText(relaylist->GetTopItem(),0));
+        Serialrelay* activeboard = controlpanel->GetOpenBoards()[id];
+        relayboard boardtype = activeboard->getType();
+        int relaynumber = activeboard-> getRelayNumber();
+        controlpanel->AssignToBoard(id);
+        controlpanel->CreateManuallayout(relaynumber,boardtype);
+        controlpanel->CreateManualControls(relaynumber,boardtype);
+    }
+    else{
+        controlpanel->CreateManuallayout(1,NOBOARD);
+        controlpanel->CreateManualControls(0,NOBOARD);
+    }
 }
+
 void MainFrame::OnTestMode(wxCommandEvent& event){
+    manual=0;
+    programmer=1;
+    test=0;
     this->controlpanel->DestroyChildren();
-
     auto canva = new DrawingCanva(1,controlpanel, wxID_ANY, wxDefaultPosition,controlpanel->GetSize());
-
     controlpanel->GetSizer()->Add(canva);
 }
+
 void MainFrame::OnProgrammerMode(wxCommandEvent& event){
-        controlpanel->CreateProgrammerlayout();
-        controlpanel->CreateProgrammerControls();
-
-
+    manual=0;
+    programmer=0;
+    test=1;
+    controlpanel->CreateProgrammerlayout();
+    controlpanel->CreateProgrammerControls();
 }
 
 void MainFrame::OnTimer(wxTimerEvent& event){
@@ -227,7 +232,20 @@ void MainFrame::OnTimer(wxTimerEvent& event){
         #endif
         portlist.Add(wxString(device));
     }
-    port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2,22),wxSize(120,100),portlist);
+    port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2,22),wxSize(120,100),portlist);   
+}
+
+void MainFrame::DoubleClickItem(wxListEvent& event){
+    int index = event.GetIndex();
+    if(manual){
+        int id = wxAtoi(relaylist->GetItemText(index, 0));
+        Serialrelay* activeboard = controlpanel->GetOpenBoards()[id];
+        relayboard boardtype = activeboard->getType();
+        int relaynumber = activeboard-> getRelayNumber();
+        controlpanel->AssignToBoard(id);
+        controlpanel->CreateManuallayout(relaynumber,boardtype);
+        controlpanel->CreateManualControls(relaynumber,boardtype);
+    }
     
 }
 
@@ -239,4 +257,5 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_BUTTON(testmodebuttonId, MainFrame::OnTestMode)
     EVT_BUTTON(progammermodebuttonId, MainFrame::OnProgrammerMode)
     EVT_TIMER(timerid, MainFrame::OnTimer)
+    EVT_LIST_ITEM_ACTIVATED(listctrlid,MainFrame::DoubleClickItem)
 wxEND_EVENT_TABLE()
