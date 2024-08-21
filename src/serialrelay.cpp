@@ -3,7 +3,8 @@
 #include <iostream>
 #include <cstdio>
 #include <serialib.hpp>
-
+#include <usb_relay_device.hpp>
+#pragma comment(lib, "usb_relay_device.lib")
 
 #ifdef _WIN32
 #include <windows.h>
@@ -25,9 +26,10 @@ void my_sleep(unsigned long milliseconds) {
 #endif
 }
 
- 
+
+
 boardinfo usbrelay  = {USBRELAY, 9600}; 
-boardinfo usbbrelay = {USBBRELAY,9600}; 
+boardinfo usbbrelay = {USBBRELAY,0}; 
 boardinfo usbmrelay = {USBMRELAY,9600}; 
 
 Serialrelay::Serialrelay(int id,relayboard board,const std::string &port,int relaynumber){
@@ -47,24 +49,49 @@ Serialrelay::Serialrelay(int id,relayboard board,const std::string &port,int rel
     }
 };
 
+Serialrelay::Serialrelay(int id,relayboard board,pusb_relay_device_info_t usbbrelayptr){
+    this->id = id;
+    this->usbbrelayptr=usbbrelayptr;
+    this->boardinfo=usbbrelay;
+};
+
 
 int Serialrelay::openCom() {
-    this->boardinterface = std::make_unique<serialib>(); // Create a new serial interface
-    const char *device = this->device.c_str();
-    this->boardinterface->openDevice(device,boardinfo.baudrate); // Open device with baud rate
-    my_sleep(1); // Sleep for 1 millisecond
-    if (!this->boardinterface->isDeviceOpen()) { // Check if the device opened successfully
-        return -1; // Return -1 if the device is not open
+    if(boardinfo.boardtype == USBBRELAY){
+        if (usb_relay_init() != 0){
+            return -1;
+        }
+        handle_usbb = usb_relay_device_open(usbbrelayptr);
+        if (handle_usbb == 0){
+            return -1;
+        }       
     }
-    return 1; // Return 1 if the device is open
+    else{
+        this->boardinterface = std::make_unique<serialib>(); // Create a new serial interface
+        const char *device = this->device.c_str();
+        this->boardinterface->openDevice(device,boardinfo.baudrate); // Open device with baud rate
+        my_sleep(1); // Sleep for 1 millisecond
+        if (!this->boardinterface->isDeviceOpen()) { // Check if the device opened successfully
+            return -1; // Return -1 if the device is not open
+        }
+        return 1; // Return 1 if the device is open
+    }
+    return -1;
 }
 
 int Serialrelay::closeCom() {
-    this->boardinterface->closeDevice(); // Close the device
-    if (this->boardinterface->isDeviceOpen()) { // Check if the device closed successfully
-        return -1; // Return -1 if the device is still open
+    if(boardinfo.boardtype == USBBRELAY){
+        usb_relay_device_close(handle_usbb);
+        return 1;
     }
-    return 1; // Return 1 if the device is closed
+    else{
+        this->boardinterface->closeDevice(); // Close the device
+        if (this->boardinterface->isDeviceOpen()) { // Check if the device closed successfully
+            return -1; // Return -1 if the device is still open
+        }
+        return 1; // Return 1 if the device is closed
+    }
+    return 1;
 }
 
 void Serialrelay::bufferrxAdd(char elt){
@@ -143,7 +170,6 @@ relayboard Serialrelay::getType(){
 }
 
 int Serialrelay::initBoard(){
-    
     switch(boardinfo.boardtype){
         /*
         USB-Relay-02,04,08 init protcol 
@@ -183,6 +209,9 @@ int Serialrelay::initBoard(){
                 }
             }
         break;
+        /*
+        USBM-Relay-02,04,08 init protcol  
+        */
         case USBMRELAY:
             {
              int status;
@@ -195,6 +224,13 @@ int Serialrelay::initBoard(){
             }
             return 1;
             }
+        /*
+        USBB-Relay init protocol
+        */
+        case USBBRELAY:
+            relaynumber=usbbrelayptr->type;
+            usb_relay_device_close_all_relay_channel(handle_usbb);
+        break;
         /*
         In oder to add other init protocol:
         -> add a board in the enum boardtype with a number in serialrelay.hpp
@@ -263,6 +299,23 @@ int Serialrelay::initBoard(){
             return 1;
             }
         break;
+        case USBBRELAY:
+            {
+            int status; 
+            for(int i = 1; i<= relaynumber; i++){
+                if(commandarray[i-1]){
+                    status = usb_relay_device_open_one_relay_channel(handle_usbb, i);
+                    }
+                else{
+                    status = usb_relay_device_close_one_relay_channel(handle_usbb, i);
+                    }
+                if(status != 0)
+                    return -1;
+                boardstate[i - 1] = commandarray[i - 1];
+                }
+            return 1;
+            }
+        break;
     }
     return -1;
 }
@@ -272,8 +325,8 @@ std::vector<int> Serialrelay::getState(){
 }
 
 
-std::vector<std::string> scanBoard(){
-    std::vector<std::string> portlist;
+onlinedev scanBoard(){
+    onlinedev dev;
     std::string device_name;
     serialib* device = new  serialib();
     for (int i=1;i<99;i++){
@@ -288,9 +341,27 @@ std::vector<std::string> scanBoard(){
          #endif
 
         if (device->openDevice(device_name.c_str(),115200)==1){
-            portlist.push_back(device_name); 
+            dev.usbdevice.push_back(device_name);
+            dev.usbbptr.push_back(NULL); 
             device->closeDevice();
         }
     }
-    return portlist; 
+    usb_relay_init();
+    pusb_relay_device_info_t hiddevice;
+    hiddevice = usb_relay_device_enumerate();
+    if(hiddevice != NULL){
+        while(hiddevice->next != NULL){
+            dev.usbbptr.push_back(hiddevice);
+            hiddevice=hiddevice->next;
+        }
+        dev.usbbptr.push_back(hiddevice);
+        for(int k=0;k<dev.usbbptr.size();k++){
+            if(dev.usbbptr[k] != NULL){
+                string serialnumber = dev.usbbptr[k]->serial_number;
+                serialnumber+="_"+std::to_string(k);
+                dev.usbdevice.push_back(serialnumber);
+            }
+        }
+    }
+    return dev; 
 }

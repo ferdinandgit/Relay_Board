@@ -22,9 +22,12 @@ private:
     void OnTimer(wxTimerEvent& event);
     void DoubleClickItem(wxListEvent& event); 
 
+    void  GetDevices();
+    
     int manual = 1;
     int programmer =0;
     int test = 0;
+    onlinedev dev; 
 
     wxTimer *refreshtimer;
     wxPanel *mainpanel;

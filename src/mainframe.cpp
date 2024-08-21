@@ -6,7 +6,7 @@
 #include <controlpanel.hpp>
 #include <serialrelay.hpp>
 #include <wx/timer.h>
-
+#include <usb_relay_device.hpp>
 
 static int id = 0; 
 
@@ -101,16 +101,8 @@ void MainFrame::CreateControls(){
     boardrelaynumber = new wxComboBox(this->managerpanel, -1, wxT("relaynumber"), wxPoint(buttonwidth*2+120,0),wxSize(120,100),relaynumberlist);
 
 
-    wxArrayString portlist;
-    std::vector<std::string> devicelist = scanBoard();
-    for(auto device : devicelist){
-        #if defined (_WIN32) || defined( _WIN64)
-            device = device.substr(4,device.length());
-        #endif
-        portlist.Add(wxString(device));
-    }
-    port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2,22),wxSize(120,100),portlist);
-
+    port = new wxComboBox(this->managerpanel, -1, wxT("usbdev"), wxPoint(buttonwidth*2,22),wxSize(120,100));
+    GetDevices();
 
 
 
@@ -135,7 +127,8 @@ void MainFrame::OnAdd(wxCommandEvent& event){
     wxString port = this->port->GetStringSelection();
     wxString type = this->boardtype->GetStringSelection();
     wxString relaynumber = this->boardrelaynumber->GetStringSelection();
-
+    wxString boardrelaynumber = this->boardrelaynumber->GetStringSelection();
+    
     for(auto openedboard : controlpanel->GetOpenBoards()){
         if(openedboard!=NULL){
             if( wxString(openedboard->getPort()) == port){
@@ -157,8 +150,19 @@ void MainFrame::OnAdd(wxCommandEvent& event){
         wxMessageBox("Please select a board", "Error", wxOK | wxICON_ERROR);
         return;
     }
-    wxString boardrelaynumber = this->boardrelaynumber->GetStringSelection();
-    Serialrelay* board = new Serialrelay(id,boardtype,port.ToStdString(),wxAtoi(relaynumber));
+    Serialrelay* board;
+    pusb_relay_device_info_t usbbptr;
+    for(int k = 0;k<dev.usbdevice.size();k++){
+        if(dev.usbdevice[k] == port.ToStdString()){
+            usbbptr = dev.usbbptr[k];
+        }
+    }
+    if( boardtype == USBBRELAY){
+        board = new Serialrelay(id,boardtype,usbbptr);
+    }
+    else{
+        board = new Serialrelay(id,boardtype,port.ToStdString(),wxAtoi(relaynumber));
+    }
     board->openCom();
     board->initBoard();
     controlpanel->AddBoard(board);
@@ -241,18 +245,7 @@ void MainFrame::OnProgrammerMode(wxCommandEvent& event){
 }
 
 void MainFrame::OnTimer(wxTimerEvent& event){
-    int buttonwidth = 75;
-    int buttonhight = 75;
-    auto buttonsize = wxSize(75,75);
-    wxArrayString portlist;
-    std::vector<std::string> devicelist = scanBoard();
-    for(auto device : devicelist){
-        #if defined (_WIN32) || defined( _WIN64)
-            device = device.substr(4,device.length());
-        #endif
-        portlist.Add(wxString(device));
-    }
-    port = new wxComboBox(this->managerpanel, -1, wxT("port"), wxPoint(buttonwidth*2,22),wxSize(120,100),portlist);   
+      
 }
 
 void MainFrame::DoubleClickItem(wxListEvent& event){
@@ -267,6 +260,25 @@ void MainFrame::DoubleClickItem(wxListEvent& event){
         controlpanel->CreateManualControls(relaynumber,boardtype);
     }
     
+}
+
+void MainFrame::GetDevices(){
+    dev = scanBoard();
+    std::vector<wxString> usblist;
+    for(auto device : dev.usbdevice){
+        #if defined (_WIN32) || defined( _WIN64)
+        std::string path = "\\\\.\\";
+        if(device.substr(0,4)==path){
+            device=device.substr(4,device.length());
+        }
+        #endif
+        usblist.push_back(wxString(device));
+    }
+    port->Clear();
+    port->SetValue("usbdev");
+    for(auto usbdev : usblist){
+        port->Append(usbdev);
+    }
 }
 
 // Event Table

@@ -91,6 +91,10 @@ void ControlPanel::CreateManualControls(int relaynumber,relayboard board){
     }
 }
 
+void ControlPanel::CreateTestControls(){
+
+}
+
 
 void ControlPanel::Relay1Controls(relayboard board){
     wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);
@@ -183,10 +187,10 @@ void ControlPanel::Relay8Controls(relayboard board){
     std::vector<wxButton*> relaybutton = {k1,k2,k3,k4,k5,k6,k7,k8};
     std::vector<int> usbrelayorderframe1 = {7,6,5,4};
     std::vector<int> usbmrelayorderframe1 = {3,2,1,0};
-    std::vector<int> usbbrelayorderframe1 = {3,2,1,0};
+    std::vector<int> usbbrelayorderframe1 = {0,1,2,3};
     std::vector<int> usbrelayorderframe2 = {3,2,1,0};
     std::vector<int> usbmrelayorderframe2 = {4,5,6,7};
-    std::vector<int> usbbrelayorderframe2 = {3,2,1,0};
+    std::vector<int> usbbrelayorderframe2 = {7,6,5,4};
     switch(board){
         case USBRELAY:
             for(int pos : usbrelayorderframe1){

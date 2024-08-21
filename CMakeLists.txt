@@ -20,6 +20,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(wxWidgets)
 
+message(STATUS "Fetching yaml cpp")
+
+FetchContent_Declare(
+  yaml-cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG 0.8.0 # Can be a tag (yaml-cpp-x.x.x), a commit hash, or a branch name (master)
+)
+FetchContent_GetProperties(yaml-cpp)
+
+if(NOT yaml-cpp_POPULATED)
+  FetchContent_Populate(yaml-cpp)
+  add_subdirectory(${yaml-cpp_SOURCE_DIR} ${yaml-cpp_BINARY_DIR})
+endif()
 
 file(COPY  ${CMAKE_CURRENT_SOURCE_DIR}/ressources DESTINATION  ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
@@ -49,9 +62,29 @@ else()
     add_executable(main WIN32 ${SOURCES} main.exe.manifest)
 endif()
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(STATUS "Detected 64-bit architecture")
+    set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Win64/usb_relay_device.lib)
+    set(HIDRELAY_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/Win64/USB_RELAY_DEVICE.dll)
+elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
+    message(STATUS "Detected 32-bit architecture")
+    set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Win32/usb_relay_device.lib)
+    set(HIDRELAY_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/Win32/USB_RELAY_DEVICE.dll)
+endif()
+
 target_include_directories(main PUBLIC 
                           ${CMAKE_CURRENT_SOURCE_DIR}/include
                           )                       
 
-target_link_libraries(main PRIVATE wxcore wxnet serial)
 
+if(WIN32)
+    target_link_libraries(main PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
+    add_custom_command(TARGET main POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${HIDRELAY_DLL_PATH}"
+        $<TARGET_FILE_DIR:main>)
+else()
+    target_link_libraries(main PRIVATE wxcore wxnet serial)
+endif()
+
+add

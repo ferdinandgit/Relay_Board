@@ -4,8 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-
+#include <usb_relay_device.hpp>
 
 using std::string;
 
@@ -23,13 +22,18 @@ typedef struct{
     int baudrate;
 }boardinfo; 
 
+typedef struct{
+    std::vector<std::string> usbdevice;
+    std::vector<pusb_relay_device_info_t> usbbptr;
+}onlinedev;
+
 
 class Serialrelay
 {
 
 public:
-    
-    Serialrelay(int id,relayboard board,const string& port,int relaynumber = 8);
+    Serialrelay(int id,relayboard board,pusb_relay_device_info_t usbbrelayptr);
+    Serialrelay(int id,relayboard board,const string& port="",int relaynumber = 8);
     int openCom();  
     int closeCom();
     int initBoard();
@@ -59,7 +63,9 @@ private:
     std::vector<char> bufferrx = std::vector<char>(8);
     std::vector<int> boardstate = std::vector<int>(16,0);
     std::unique_ptr<serialib> boardinterface;
+    pusb_relay_device_info_t usbbrelayptr;
+    intptr_t handle_usbb;
 };
 
-std::vector<std::string> scanBoard();
+onlinedev scanBoard();
 void my_sleep(unsigned long milliseconds);
