@@ -87,4 +87,11 @@ else()
     target_link_libraries(main PRIVATE wxcore wxnet serial)
 endif()
 
-add
+add_executable(inter ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter.cpp)
+target_link_libraries(inter PUBLIC yaml-cpp::yaml-cpp)
+target_include_directories(inter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(inter PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
+    add_custom_command(TARGET inter POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/test.yaml"
+        $<TARGET_FILE_DIR:inter>)

@@ -142,6 +142,8 @@ void MainFrame::OnAdd(wxCommandEvent& event){
     }
     else if(type == wxString("USBM-RELAY")){
         boardtype = USBMRELAY;
+        if(relaynumber==wxString(""))
+            return; 
     }
     else if(type == wxString("USBB-RELAY")){
         boardtype = USBBRELAY;
