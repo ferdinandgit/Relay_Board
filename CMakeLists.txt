@@ -25,7 +25,7 @@ message(STATUS "Fetching yaml cpp")
 FetchContent_Declare(
   yaml-cpp
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-  GIT_TAG 0.8.0 # Can be a tag (yaml-cpp-x.x.x), a commit hash, or a branch name (master)
+  GIT_TAG 0.8.0
 )
 FetchContent_GetProperties(yaml-cpp)
 
@@ -70,6 +70,8 @@ elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(STATUS "Detected 32-bit architecture")
     set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Win32/usb_relay_device.lib)
     set(HIDRELAY_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/Win32/USB_RELAY_DEVICE.dll)
+else() 
+    set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Unix/usb_relay_device.so)
 endif()
 
 target_include_directories(main PUBLIC 
@@ -83,9 +85,14 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${HIDRELAY_DLL_PATH}"
         $<TARGET_FILE_DIR:main>)
-else()
-    target_link_libraries(main PRIVATE wxcore wxnet serial)
 endif()
+
+target_link_libraries(main PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
+
+
+
+
+
 
 add_executable(inter ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/serialrelay.cpp)
 target_link_libraries(inter PUBLIC yaml-cpp::yaml-cpp)

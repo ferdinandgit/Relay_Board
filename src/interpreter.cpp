@@ -111,20 +111,6 @@ int Interpreter::match_hardware(Serialrelay * board,std::string id){
     return 1;
 }
 
-void Interpreter::generator_loop(){
-    std::vector<boardprogram> loop;
-    std::vector<int> pc; 
-    for(auto boardprogram : boardprograms){
-        if(boardprogram.configuration.loop)
-            loop.push_back(boardprogram);
-            pc.push_back(0);
-    }
-    while(true){
-
-    }
-
-}
-
 std::vector<config> Interpreter::get_conf(){
     return configs;
 }
