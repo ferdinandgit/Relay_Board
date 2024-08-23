@@ -87,7 +87,7 @@ else()
     target_link_libraries(main PRIVATE wxcore wxnet serial)
 endif()
 
-add_executable(inter ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter.cpp)
+add_executable(inter ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/serialrelay.cpp)
 target_link_libraries(inter PUBLIC yaml-cpp::yaml-cpp)
 target_include_directories(inter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(inter PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
