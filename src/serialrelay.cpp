@@ -38,13 +38,13 @@ Serialrelay::Serialrelay(int id,relayboard board,const std::string &port,int rel
     this->relaynumber = relaynumber;
     switch(board){
         case USBRELAY:
-            this->boardinfo=usbrelay;
+            this->binfo=usbrelay;
         break;
         case USBBRELAY:
-            this->boardinfo=usbbrelay;
+            this->binfo=usbbrelay;
         break;
         case USBMRELAY: 
-            this->boardinfo=usbmrelay;
+            this->binfo=usbmrelay;
         break;  
     }
 };
@@ -52,12 +52,12 @@ Serialrelay::Serialrelay(int id,relayboard board,const std::string &port,int rel
 Serialrelay::Serialrelay(int id,relayboard board,pusb_relay_device_info_t usbbrelayptr){
     this->id = id;
     this->usbbrelayptr=usbbrelayptr;
-    this->boardinfo=usbbrelay;
+    this->binfo=usbbrelay;
 };
 
 
 int Serialrelay::openCom() {
-    if(boardinfo.boardtype == USBBRELAY){
+    if(binfo.boardtype == USBBRELAY){
         if (usb_relay_init() != 0){
             return -1;
         }
@@ -69,7 +69,7 @@ int Serialrelay::openCom() {
     else{
         this->boardinterface = std::make_unique<serialib>(); // Create a new serial interface
         const char *device = this->device.c_str();
-        this->boardinterface->openDevice(device,boardinfo.baudrate); // Open device with baud rate
+        this->boardinterface->openDevice(device,binfo.baudrate); // Open device with baud rate
         my_sleep(1); // Sleep for 1 millisecond
         if (!this->boardinterface->isDeviceOpen()) { // Check if the device opened successfully
             return -1; // Return -1 if the device is not open
@@ -80,7 +80,7 @@ int Serialrelay::openCom() {
 }
 
 int Serialrelay::closeCom() {
-    if(boardinfo.boardtype == USBBRELAY){
+    if(binfo.boardtype == USBBRELAY){
         usb_relay_device_close(handle_usbb);
         return 1;
     }
@@ -146,7 +146,7 @@ int Serialrelay::getRelayNumber(){
 }
 
 int Serialrelay::getSpeed(){
-    return boardinfo.baudrate;
+    return binfo.baudrate;
 }
 
 std::string Serialrelay::getPort(){
@@ -166,11 +166,11 @@ char Serialrelay::getTx(){
 }
 
 relayboard Serialrelay::getType(){
-    return boardinfo.boardtype;
+    return binfo.boardtype;
 }
 
 int Serialrelay::initBoard(){
-    switch(boardinfo.boardtype){
+    switch(binfo.boardtype){
         /*
         USB-Relay-02,04,08 init protcol 
         ->send 0x50 for ident
@@ -241,7 +241,7 @@ int Serialrelay::initBoard(){
 }
 
  int Serialrelay::setState(std::vector<int> commandarray){
-    switch (boardinfo.boardtype)
+    switch (binfo.boardtype)
     {
         /*
         USB-Relay-02,04,08 control protocol
@@ -337,8 +337,8 @@ onlinedev scanBoard(){
 
         // Check for Linux port
         #ifdef __linux__
-            device_name = "/dev/ttyACM"+std::to_string(i-1);
-         #endif
+            device_name = "/dev/ttyUSB"+std::to_string(i-1);
+        #endif
 
         if (device->openDevice(device_name.c_str(),115200)==1){
             dev.usbdevice.push_back(device_name);

@@ -62,16 +62,21 @@ else()
     add_executable(main WIN32 ${SOURCES} main.exe.manifest)
 endif()
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(STATUS "Detected 64-bit architecture")
-    set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Win64/usb_relay_device.lib)
-    set(HIDRELAY_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/Win64/USB_RELAY_DEVICE.dll)
-elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
-    message(STATUS "Detected 32-bit architecture")
-    set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Win32/usb_relay_device.lib)
-    set(HIDRELAY_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/Win32/USB_RELAY_DEVICE.dll)
-else() 
-    set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Unix/usb_relay_device.so)
+if(WIN32)
+    message(STATUS "Windows")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        message(STATUS "Detected 64-bit architecture")
+        set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Win64/usb_relay_device.lib)
+        set(HIDRELAY_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/Win64/USB_RELAY_DEVICE.dll)
+    elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
+        message(STATUS "Detected 32-bit architecture")
+        set(HIDRELAY_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/lib/Win32/usb_relay_device.lib)
+        set(HIDRELAY_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/Win32/USB_RELAY_DEVICE.dll)
+    endif()
+else()
+    message(STATUS "Unix")
+    add_library(hidusbrelay SHARED IMPORTED)
+    set_target_properties( hidusbrelay PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/Unix/usb_relay_device.so )
 endif()
 
 target_include_directories(main PUBLIC 
@@ -85,20 +90,18 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${HIDRELAY_DLL_PATH}"
         $<TARGET_FILE_DIR:main>)
+else()
+    target_link_libraries(main PRIVATE wxcore wxnet serial hidusbrelay)
 endif()
-
-target_link_libraries(main PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
-
-
-
-
 
 
 add_executable(inter ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/serialrelay.cpp)
 target_link_libraries(inter PUBLIC yaml-cpp::yaml-cpp)
 target_include_directories(inter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(inter PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
-    add_custom_command(TARGET inter POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/test.yaml"
-        $<TARGET_FILE_DIR:inter>)
+
+if(WIN32)
+    target_link_libraries(inter PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
+else()
+    target_link_libraries(inter PRIVATE wxcore wxnet serial hidusbrelay)
+endif()
+

@@ -56,7 +56,7 @@ private:
     void bufferrxAdd(char elt);
     void buffertxAdd(char elt);
     int id;
-    boardinfo boardinfo;
+    boardinfo binfo;
     int relaynumber;
     std::string device; 
     std::vector<char> buffertx = std::vector<char>(8);
