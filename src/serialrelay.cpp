@@ -76,7 +76,7 @@ int Serialrelay::openCom() {
         }
         return 1; // Return 1 if the device is open
     }
-    return -1;
+    return 1;
 }
 
 int Serialrelay::closeCom() {
@@ -214,7 +214,11 @@ int Serialrelay::initBoard(){
         */
         case USBMRELAY:
             {
-             int status;
+            if (this->send(0x50, 200) != 1) // check for if no error
+                return -1;
+            if (this->recieve(1) == 1) // Receive response not hte good board
+                return -1;    
+            int status;
             for(int i = 1; i <= relaynumber; i++) {
                 std::vector<int> buffer = {0xA0, i, 0, 0xA0 + i};
                 status = send(buffer, delay);

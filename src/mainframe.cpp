@@ -137,36 +137,89 @@ void MainFrame::OnAdd(wxCommandEvent& event){
             }
         }
     }
+
     if(type ==  wxString("USB-RELAY")){
         boardtype = USBRELAY;
+        #if defined (_WIN32) || defined( _WIN64)
+            if(port.ToStdString().substr(0,3)!="COM"){
+                wxMessageBox("Please select a valid usb device", "Error", wxOK | wxICON_ERROR);
+                return;
+            } 
+        #endif
+        #ifdef __linux__
+            if(port.TStdString().substr(0,4) != "/dev"){
+                wxMessageBox("Please select a valid usb device", "Error", wxOK | wxICON_ERROR);
+                return;
+            }
+        #endif
     }
     else if(type == wxString("USBM-RELAY")){
         boardtype = USBMRELAY;
-        if(relaynumber==wxString(""))
-            return; 
+        if(relaynumber==wxString("")){
+            wxMessageBox("Please select a valid relaynumber", "Error", wxOK | wxICON_ERROR);
+            return;
+        }
+        #if defined (_WIN32) || defined( _WIN64)
+            if(port.ToStdString().substr(0,3)!="COM"){
+                wxMessageBox("Please select a valid usb device", "Error", wxOK | wxICON_ERROR);
+                return;
+            } 
+        #endif
+        #ifdef __linux__
+            if(port.TStdString().substr(0,4) != "/dev"){
+                wxMessageBox("Please select a valid usb device", "Error", wxOK | wxICON_ERROR);
+                return;
+            }
+        #endif
     }
     else if(type == wxString("USBB-RELAY")){
         boardtype = USBBRELAY;
+         #if defined (_WIN32) || defined( _WIN64)
+            if(port.ToStdString().substr(0,3)=="COM"){
+                wxMessageBox("Please select a valid usb device", "Error", wxOK | wxICON_ERROR);
+                return;
+            } 
+        #endif
+        #ifdef __linux__
+            if(port.TStdString().substr(0,4) == "/dev"){
+                wxMessageBox("Please select a valid usb device", "Error", wxOK | wxICON_ERROR);
+                return;
+            }
+        #endif 
     }
     else{
         wxMessageBox("Please select a board", "Error", wxOK | wxICON_ERROR);
         return;
     }
+
     Serialrelay* board;
     pusb_relay_device_info_t usbbptr;
+    
     for(int k = 0;k<dev.usbdevice.size();k++){
         if(dev.usbdevice[k] == port.ToStdString()){
             usbbptr = dev.usbbptr[k];
         }
     }
+
     if( boardtype == USBBRELAY){
         board = new Serialrelay(id,boardtype,usbbptr);
     }
     else{
         board = new Serialrelay(id,boardtype,port.ToStdString(),wxAtoi(relaynumber));
     }
-    board->openCom();
-    board->initBoard();
+
+    if(board->openCom()==-1){
+        wxMessageBox("Fail to Connect: Check hardware or Select the good device.\nIf USB-RELAY, try a power RESET !", "Error", wxOK | wxICON_ERROR);
+        board->closeCom();
+        return;
+    };
+    
+    if(board->initBoard()==-1){
+        wxMessageBox("Fail to Connect: Check hardware or Select the good device.\nIf USB-RELAY, try a power RESET !", "Error", wxOK | wxICON_ERROR);
+        board->closeCom();
+        return;
+    };
+
     controlpanel->AddBoard(board);
     long itemIndex = relaylist->InsertItem(relaylist->GetItemCount(), wxString::Format("%d", id));
     relaylist->SetItem(itemIndex, 1, port);
@@ -226,17 +279,28 @@ void MainFrame::OnManualMode(wxCommandEvent& event){
     else{
         controlpanel->CreateManuallayout(0,NOBOARD);
         controlpanel->CreateManualControls(0,NOBOARD);
+        controlpanel->AssignToNull();
     }
 }
 
 void MainFrame::OnTestMode(wxCommandEvent& event){
     manual=0;
-    programmer=1;
-    test=0;
-    this->controlpanel->DestroyChildren();
-    auto canva = new DrawingCanva(0,NOBOARD,controlpanel, wxID_ANY, wxDefaultPosition,controlpanel->GetSize());
-    controlpanel->GetSizer()->Add(canva);
+    programmer=0;
+    test=1;
+    if(relaylist->GetItemCount() > 0){
+        int id = wxAtoi(relaylist->GetItemText(relaylist->GetTopItem(),0));
+        Serialrelay* activeboard = controlpanel->GetOpenBoards()[id];
+        relayboard boardtype = activeboard->getType();
+        controlpanel->CreateTestlayout();
+        controlpanel->CreateTestControls(id,boardtype);
+    }
+    else{
+        controlpanel->CreateTestlayout();
+        controlpanel->CreateTestControls(0,NOBOARD);
+        controlpanel->AssignToNull();
+    }
 }
+
 
 void MainFrame::OnProgrammerMode(wxCommandEvent& event){
     manual=0;
@@ -261,7 +325,14 @@ void MainFrame::DoubleClickItem(wxListEvent& event){
         controlpanel->CreateManuallayout(relaynumber,boardtype);
         controlpanel->CreateManualControls(relaynumber,boardtype);
     }
-    
+    if(test){
+        int id = wxAtoi(relaylist->GetItemText(index, 0));
+        Serialrelay* activeboard = controlpanel->GetOpenBoards()[id];
+        relayboard boardtype = activeboard->getType();
+        controlpanel->AssignToBoard(id);
+        controlpanel->CreateTestlayout();
+        controlpanel->CreateTestControls(id,boardtype);
+    }
 }
 
 void MainFrame::GetDevices(){
@@ -282,6 +353,7 @@ void MainFrame::GetDevices(){
         port->Append(usbdev);
     }
 }
+
 
 // Event Table
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)

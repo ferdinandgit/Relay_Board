@@ -3,6 +3,7 @@
 #include <wx/gbsizer.h>
 #include <wx/listctrl.h>
 #include <drawingcanva.hpp>
+#include <wx/grid.h>
 
 
 ControlPanel::ControlPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size): wxPanel(parent, id, pos, size){
@@ -91,9 +92,56 @@ void ControlPanel::CreateManualControls(int relaynumber,relayboard board){
     }
 }
 
-void ControlPanel::CreateTestControls(){
-
+void ControlPanel::CreateTestlayout(){
+    this->DestroyChildren();
+    testpanel = new wxPanel(this,wxID_ANY,wxDefaultPosition,this->GetSize());
+    testpanel->SetBackgroundColour(wxColour(100,100,100));
+    this->GetSizer()->Add(testpanel,1,wxEXPAND,0);
 }
+
+void ControlPanel::CreateTestControls(int id, relayboard board) {
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* textLabelSizer = new wxBoxSizer(wxHORIZONTAL);
+    std::string idstring;
+    std::string typestring;
+    switch(board){
+        case USBRELAY:
+            typestring = "BOARD : USBRELAY";
+            idstring = "ID : "+std::to_string(id);
+        break;
+        case USBMRELAY:
+            typestring = "BOARD : USBMRELAY";
+            idstring = "ID : "+std::to_string(id);
+        break;
+        case USBBRELAY:
+            typestring = "BOARD : USBBRELAY";
+            idstring = "ID : "+std::to_string(id);
+        break;
+        default:
+            typestring = "BOARD : NONE";
+            idstring = "ID : NONE";
+    }
+    wxStaticText* label1 = new wxStaticText(testpanel, wxID_ANY, idstring);
+    wxStaticText* label2 = new wxStaticText(testpanel, wxID_ANY, typestring);
+    textLabelSizer->Add(label1, 1, wxALIGN_CENTER | wxALL, 10);
+    textLabelSizer->Add(label2, 1, wxALIGN_CENTER | wxALL, 10);
+    mainSizer->Add(textLabelSizer, 0, wxEXPAND | wxALL, 10);
+    displayPanel = new wxPanel(testpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    displayPanel->SetBackgroundColour(*wxRED);
+    testrelaytext = new wxStaticText(displayPanel, wxID_ANY, "K1", wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL);
+    wxFont font(100, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+    testrelaytext->SetFont(font);
+    wxBoxSizer* displaySizer = new wxBoxSizer(wxHORIZONTAL);
+    displaySizer->Add(testrelaytext, 1, wxALIGN_CENTER | wxALL, 10);
+    displayPanel->SetSizer(displaySizer);
+    mainSizer->Add(displayPanel, 3, wxEXPAND | wxALL, 10);
+    testButton = new wxButton(testpanel, testButtonId, "Test");
+    mainSizer->Add(testButton, 1, wxEXPAND | wxALL, 10);
+
+    testpanel->SetSizer(mainSizer);
+    Layout();
+}
+
 
 
 void ControlPanel::Relay1Controls(relayboard board){
@@ -253,6 +301,10 @@ void ControlPanel::AssignToBoard(int id){
     activeboard=openboards[id];
 }
 
+void ControlPanel::AssignToNull(){
+    activeboard=NULL;
+}
+
 
 void ControlPanel::UpdateState(){
     std::vector<int> status = activeboard->getState();
@@ -268,6 +320,32 @@ void ControlPanel::UpdateState(){
     }
 }
 
+void ControlPanel::OntestButton(wxCommandEvent &event){
+    std::vector<int> command(16,0);
+    if(activeboard == NULL){
+        wxMessageBox("No board to test", "Error", wxOK | wxICON_ERROR);
+    }
+    else{
+        for(int k=0;k<activeboard->getRelayNumber();k++){
+            std::string relay = "K"+std::to_string(k+1);
+            testrelaytext->SetLabel(relay);
+            Layout();
+            command[k]=1;
+            activeboard->setState(command);
+            displayPanel->SetBackgroundColour(*wxGREEN);
+            displayPanel->Refresh();
+            displayPanel->Update();
+            my_sleep(500);
+            command[k]=0;
+            activeboard->setState(command);
+            displayPanel->SetBackgroundColour(*wxRED);
+            displayPanel->Refresh();
+            displayPanel->Update();
+            my_sleep(500);
+        }
+    }
+        
+}
 void ControlPanel::OnK1(wxCommandEvent &event){
     std::vector<int> command = activeboard->getState();
     command[0]=!command[0];
@@ -381,6 +459,7 @@ void ControlPanel::OnK16(wxCommandEvent &event){
 }
 
 wxBEGIN_EVENT_TABLE(ControlPanel, wxPanel)
+    EVT_BUTTON(testButtonId, ControlPanel::OntestButton)
     EVT_BUTTON(k1Id, ControlPanel::OnK1)
     EVT_BUTTON(k2Id, ControlPanel::OnK2)
     EVT_BUTTON(k3Id, ControlPanel::OnK3)
@@ -399,10 +478,3 @@ wxBEGIN_EVENT_TABLE(ControlPanel, wxPanel)
     EVT_BUTTON(k16Id, ControlPanel::OnK16)
 wxEND_EVENT_TABLE()
 
-/*int columns = 2;
-        int rows = 8;
-        std::vector<wxButton*> relaytoggle = {k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12,k13,k14,k15,k16};
-        std::vector<wxStaticText*> relaystatus = {statek1,statek2,statek3,statek4,statek5,statek6,statek7,statek8,statek9,statek10,statek11,statek12,statek13,statek14,statek15,statek16};
-        int panelwidth = canva->getrelaywidth()+canva->getstep()/2;
-        int panellenght = canva->getrelaylenght()/2+canva->getstep()/2;
-        wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);*/

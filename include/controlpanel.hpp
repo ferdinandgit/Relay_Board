@@ -13,19 +13,17 @@ public:
     ControlPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size);
     void CreateManuallayout(int relaynumber,relayboard board);
     void CreateManualControls(int relaynumber,relayboard board);
-    void CreateManualevent();
     void CreateTestlayout();
-    void CreateTestControls();
-    void CreateTestevent();
+    void CreateTestControls(int id, relayboard board);
     void CreateProgrammerlayout();
     void CreateProgrammerControls();
-    void CreateProgrammerevent();
     std::vector<Serialrelay*> GetOpenBoards();
     void AddBoard(Serialrelay* board);
     void RmBoard(int id);
     void InitControlPanel(); 
     void BoardControlsbuild();
     void AssignToBoard(int id);
+    void AssignToNull();
     
      
 
@@ -36,8 +34,9 @@ private:
     void Relay4Controls(relayboard board);
     void Relay8Controls(relayboard board);
     void Relay16Contols(relayboard board);
-
     void UpdateState();
+
+    void OntestButton(wxCommandEvent &event);
     void OnK1(wxCommandEvent &event);
     void OnK2(wxCommandEvent &event);
     void OnK3(wxCommandEvent &event);
@@ -57,8 +56,11 @@ private:
     Serialrelay* activeboard; 
     DrawingCanva* canva;
     wxPanel* programmerpanel;
+    wxPanel* testpanel;
+    wxPanel* displayPanel;
     wxListCtrl* program;
     std::vector<Serialrelay*> openboards;
+    wxButton* testButton;
     wxButton* k1;
     wxButton* k2;
     wxButton* k3;
@@ -75,6 +77,7 @@ private:
     wxButton* k14;
     wxButton* k15;
     wxButton* k16;
+    wxStaticText* testrelaytext;
     wxStaticText* statek1;
     wxStaticText* statek2;
     wxStaticText* statek3;
@@ -111,4 +114,5 @@ enum ControlpanelButtonId{
     k14Id = wxID_LAST + 19,
     k15Id = wxID_LAST + 20,
     k16Id = wxID_LAST + 21,
+    testButtonId = wxID_LAST + 22
 };
