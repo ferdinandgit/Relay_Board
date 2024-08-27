@@ -14,6 +14,7 @@ typedef enum{
     USBRELAY = 1,
     USBMRELAY = 2,
     USBBRELAY = 3,
+    USBCRELAY = 4,
     NOBOARD = 100
 }relayboard;
 

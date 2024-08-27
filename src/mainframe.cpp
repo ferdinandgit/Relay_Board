@@ -86,7 +86,7 @@ void MainFrame::CreateControls(){
     this->clearbutton = new wxBitmapButton(this->managerpanel,clearbuttonId, clearicon, wxPoint(buttonwidth,0),buttonsize, 0);
    
     wxArrayString boardtypelist;
-    std::vector<std::string> boardref = {"USB-RELAY","USBB-RELAY","USBM-RELAY"};
+    std::vector<std::string> boardref = {"USB-RELAY","USBB-RELAY","USBM-RELAY","USBC-RELAY"};
     for(auto ref : boardref){
         boardtypelist.Add(wxString(ref));
     }
@@ -186,6 +186,21 @@ void MainFrame::OnAdd(wxCommandEvent& event){
                 return;
             }
         #endif 
+    }
+    else if(type == wxString("USBC-RELAY")){
+        boardtype = USBCRELAY;
+        #if defined (_WIN32) || defined( _WIN64)
+            if(port.ToStdString().substr(0,3)!="COM"){
+                wxMessageBox("Please select a valid usb device", "Error", wxOK | wxICON_ERROR);
+                return;
+            } 
+        #endif
+        #ifdef __linux__
+            if(port.TStdString().substr(0,4) != "/dev"){
+                wxMessageBox("Please select a valid usb device", "Error", wxOK | wxICON_ERROR);
+                return;
+            }
+        #endif
     }
     else{
         wxMessageBox("Please select a board", "Error", wxOK | wxICON_ERROR);

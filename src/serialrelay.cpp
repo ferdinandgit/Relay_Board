@@ -31,6 +31,7 @@ void my_sleep(unsigned long milliseconds) {
 boardinfo usbrelay  = {USBRELAY, 9600}; 
 boardinfo usbbrelay = {USBBRELAY,0}; 
 boardinfo usbmrelay = {USBMRELAY,9600}; 
+boardinfo usbcrelay = {USBCRELAY,9600};
 
 Serialrelay::Serialrelay(int id,relayboard board,const std::string &port,int relaynumber){
     this->id = id;
@@ -45,6 +46,9 @@ Serialrelay::Serialrelay(int id,relayboard board,const std::string &port,int rel
         break;
         case USBMRELAY: 
             this->binfo=usbmrelay;
+        break;
+        case USBCRELAY:
+            this->binfo=usbcrelay;
         break;  
     }
 };
@@ -214,9 +218,13 @@ int Serialrelay::initBoard(){
         */
         case USBMRELAY:
             {
-            if (this->send(0x50, 200) != 1) // check for if no error
+            if (this->send(0x50, 200) != 1) // check  if no error
                 return -1;
-            if (this->recieve(1) == 1) // Receive response not hte good board
+            if (this->recieve(1) == 1) // Receive response not the good board
+                return -1;
+            if (this->send(0x0D, 200) != 1) // check if no error
+                return -1;
+            if (this->recieve(1) == 1) //// Receive response not the good board
                 return -1;    
             int status;
             for(int i = 1; i <= relaynumber; i++) {
@@ -234,14 +242,35 @@ int Serialrelay::initBoard(){
         case USBBRELAY:
             relaynumber=usbbrelayptr->type;
             usb_relay_device_close_all_relay_channel(handle_usbb);
+            return 1;
         break;
+        /*
+        USBC-Relay init protocol
+        */
+        case USBCRELAY:
+            relaynumber=16;
+            if (this->send(0x0D, 200) != 1) // Send initialization command
+                return -1;
+            if (this->recieve(1) != 1) // Receive response
+                return -1;
+            uint8_t data = this->bufferrx[0];
+            data = static_cast<int>(data);
+            if(data == 0x01){
+                return 1;
+            }
+            std::vector<int> alloff = {0x0c,0x00,0x00};
+            if(this->send(alloff,200)!=1){
+                return -1;
+            }
+            return 1;
+
         /*
         In oder to add other init protocol:
         -> add a board in the enum boardtype with a number in serialrelay.hpp
         -> add a case associated to the number in the init function 
         */
     }
-    return 1;
+    return -1;
 }
 
  int Serialrelay::setState(std::vector<int> commandarray){
@@ -316,6 +345,29 @@ int Serialrelay::initBoard(){
                 if(status != 0)
                     return -1;
                 boardstate[i - 1] = commandarray[i - 1];
+                }
+            return 1;
+            }
+        break;
+        case USBCRELAY:
+            {
+            int status=0;
+            int command1=0;
+            int command2=0;
+            for(int i = relaynumber/2-1; i >= 0; i--) {
+                command1 += commandarray[i]; 
+                command2 += commandarray[i+8]; 
+                if(i!=0){
+                    command1=command1<<1;  
+                    command2=command2<<1; 
+                }
+            }
+            std::vector<int> buffer = {0x0C,command1, command2};
+            status = send(buffer, delay); 
+            if(status != 1)
+                return -1;
+            for(int i = 1; i<= relaynumber; i++){
+                 boardstate[i - 1] = commandarray[i - 1];
                 }
             return 1;
             }
