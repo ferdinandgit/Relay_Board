@@ -33,42 +33,68 @@ void ControlPanel::CreateProgrammerlayout(){
 }
 
 void ControlPanel::CreateProgrammerControls(){
-    wxBoxSizer* programctrlsizer = new wxBoxSizer(wxVERTICAL);
-    wxBoxSizer* topcontrols = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer* bottomcontrols = new wxBoxSizer(wxHORIZONTAL); 
+    // Create the text control and browse button
+    wxTextCtrl* m_filePathCtrl = new wxTextCtrl(programmerpanel, wxID_ANY, "", wxDefaultPosition, wxSize(300, 25));
+    wxButton* browseButton = new wxButton(programmerpanel, wxID_ANY, "Browse...", wxDefaultPosition, wxSize(80, 25));
+    wxBoxSizer* topSizer = new wxBoxSizer(wxHORIZONTAL);
+    topSizer->Add(m_filePathCtrl, 1, wxEXPAND | wxALL, 5);
+    topSizer->Add(browseButton, 0, wxALL, 5);
 
-    program = new wxListCtrl(programmerpanel, -1, wxDefaultPosition,wxDefaultSize, wxLC_REPORT|wxRAISED_BORDER|wxLC_VRULES);
-    program->InsertColumn(0,"Id",wxLIST_ALIGN_LEFT,90);
+    // Create the Load button, and Add/Clear buttons
+    wxButton* loadButton = new wxButton(programmerpanel, wxID_ANY, "Load", wxDefaultPosition, wxSize(80, 25));
+    wxButton* addButton = new wxButton(programmerpanel, wxID_ANY, "Add", wxDefaultPosition, wxSize(80, 25));
+    wxButton* clearButton = new wxButton(programmerpanel, wxID_ANY, "Clear", wxDefaultPosition, wxSize(80, 25));
 
-    for(int k = 1;k<=16;k++){
-        program->InsertColumn(k,"K"+std::to_string(k),wxLIST_ALIGN_LEFT,40);
-    }
+    // Create titles for the lists
+    wxStaticText* title1 = new wxStaticText(programmerpanel, wxID_ANY, "Program Board ID", wxDefaultPosition, wxDefaultSize);
+    wxStaticText* title2 = new wxStaticText(programmerpanel, wxID_ANY, "Hardware Board", wxDefaultPosition, wxDefaultSize);
 
-    wxButton* save = new wxButton(programmerpanel ,wxID_ANY,"Save",wxDefaultPosition,wxSize(50,20));
-    wxButton* open = new wxButton(programmerpanel ,wxID_ANY,"Open",wxDefaultPosition,wxSize(50,20));
-    wxCheckBox* loop = new wxCheckBox(programmerpanel,wxID_ANY,"Loop",wxDefaultPosition,wxSize(20,20));
-    wxCheckBox* sequence = new wxCheckBox(programmerpanel,wxID_ANY,"Sequence",wxDefaultPosition,wxSize(20,20));
-    wxButton* Add = new wxButton(programmerpanel ,wxID_ANY,"Add",wxDefaultPosition,wxSize(50,20));
-    wxButton* Clear = new wxButton(programmerpanel ,wxID_ANY,"Clear",wxDefaultPosition,wxSize(50,20));
-    wxButton* start = new wxButton(programmerpanel ,wxID_ANY,"Start",wxDefaultPosition,wxSize(100,100));
-    wxButton* stop = new wxButton(programmerpanel ,wxID_ANY,"Stop",wxDefaultPosition,wxSize(100,100));
-    topcontrols->Add(open,wxALIGN_LEFT);
-    topcontrols->AddSpacer(20);
-    topcontrols->Add(save,wxALIGN_LEFT);
-    topcontrols->AddSpacer(20);
-    topcontrols->Add(loop, wxALL,5);
-    topcontrols->AddStretchSpacer(20);
-    topcontrols->Add(sequence,wxALL,5);
-    topcontrols->Add(Add,wxALIGN_RIGHT,5);
-    topcontrols->AddSpacer(20);
-    topcontrols->Add(Clear,wxALIGN_RIGHT);
-    bottomcontrols->Add(start,wxALIGN_CENTER,5);
-    bottomcontrols->AddSpacer(20); 
-    bottomcontrols->Add(stop,wxALIGN_CENTER,5);
-    programctrlsizer->Add(topcontrols,0,wxEXPAND|wxTOP|wxLEFT|wxRIGHT,20);
-    programctrlsizer->Add(program,1, wxGROW|wxALL,20);
-    programctrlsizer->Add(bottomcontrols,0,wxEXPAND|wxBOTTOM|wxLEFT|wxRIGHT,20);
-    programmerpanel->SetSizerAndFit(programctrlsizer);
+    // Create sizers to align the Load, Add, and Clear buttons above the lists
+    wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    buttonSizer->Add(loadButton, 0, wxALL, 5);    // Align with left list
+    buttonSizer->AddStretchSpacer(1);             // Add a spacer between the buttons
+    buttonSizer->Add(addButton, 0, wxALL, 5);     // Align with right list
+    buttonSizer->Add(clearButton, 0, wxALL, 5);   // Align with right list
+
+    // Create the list controls
+    wxListCtrl* m_listCtrl1 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(200, 150), wxLC_REPORT);
+    wxListCtrl* m_listCtrl2 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(200, 150), wxLC_REPORT);
+
+    // Add columns to the list controls
+    m_listCtrl1->InsertColumn(0, "Items");
+    m_listCtrl2->InsertColumn(0, "Items");
+
+    // Create a sizer to hold the titles and lists
+    wxBoxSizer* listSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* leftListSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* rightListSizer = new wxBoxSizer(wxVERTICAL);
+
+    leftListSizer->Add(title1, 0, wxALIGN_LEFT | wxALL, 5);     // Add title above the left list
+    leftListSizer->Add(m_listCtrl1, 1, wxEXPAND | wxALL, 5);    // Add the left list
+
+    rightListSizer->Add(title2, 0, wxALIGN_LEFT | wxALL, 5);    // Add title above the right list
+    rightListSizer->Add(m_listCtrl2, 1, wxEXPAND | wxALL, 5);   // Add the right list
+
+    listSizer->Add(leftListSizer, 1, wxEXPAND | wxALL, 5);      // Add left list and title
+    listSizer->Add(rightListSizer, 1, wxEXPAND | wxALL, 5);     // Add right list and title
+
+    // Create the Start and Stop buttons
+    wxButton* startButton = new wxButton(programmerpanel, wxID_ANY, "Start", wxDefaultPosition, wxSize(80, 25));
+    wxButton* stopButton = new wxButton(programmerpanel, wxID_ANY, "Stop", wxDefaultPosition, wxSize(80, 25));
+
+    // Create a sizer for the Start and Stop buttons
+    wxBoxSizer* buttonSizer2 = new wxBoxSizer(wxHORIZONTAL);
+    buttonSizer2->Add(startButton, 1, wxEXPAND | wxALL, 5);  // Expand to fill half the space
+    buttonSizer2->Add(stopButton, 1, wxEXPAND | wxALL, 5);   // Expand to fill half the space
+
+    // Create the main sizer and add all components to it
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+    mainSizer->Add(topSizer, 0, wxEXPAND);
+    mainSizer->Add(buttonSizer, 0, wxEXPAND | wxALL, 5);        // Add the Load, Add, and Clear buttons
+    mainSizer->Add(listSizer, 4, wxEXPAND);                     // Add the lists
+    mainSizer->Add(buttonSizer2, 1, wxEXPAND | wxALL, 5);       // Add the Start and Stop buttons
+
+    programmerpanel->SetSizer(mainSizer);
     Layout();
 }
 
@@ -115,6 +141,10 @@ void ControlPanel::CreateTestControls(int id, relayboard board) {
         break;
         case USBBRELAY:
             typestring = "BOARD : USBBRELAY";
+            idstring = "ID : "+std::to_string(id);
+        break;
+        case USBCRELAY:
+            typestring = "BOARD : USBCRELAY";
             idstring = "ID : "+std::to_string(id);
         break;
         default:
@@ -270,7 +300,7 @@ void ControlPanel::Relay8Controls(relayboard board){
                 frame2->Add(relaybutton[pos],wxALIGN_CENTER);
             }
         break;
-
+        /*add other 16 relays board layout*/
     }
     controlssizer->AddStretchSpacer(1);
     controlssizer->Add(frame1,0,wxALIGN_CENTER);
@@ -282,8 +312,70 @@ void ControlPanel::Relay8Controls(relayboard board){
 }
 
 void ControlPanel::Relay16Contols(relayboard board){
-
+      int panelwidth = canva->getrelaywidth()+canva->getstep()/2;
+    int panellenght = canva->getrelaylenght()/2+canva->getstep()/2;
+    wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);
+    wxGridSizer *frame1 = new wxGridSizer(8,2,30,10);
+    wxGridSizer *frame2 = new wxGridSizer(8,2,30,10);
+    k1 = new wxButton(this->canva ,k1Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k2 = new wxButton(this->canva ,k2Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k3 = new wxButton(this->canva ,k3Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k4 = new wxButton(this->canva ,k4Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k5 = new wxButton(this->canva ,k5Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k6 = new wxButton(this->canva ,k6Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k7 = new wxButton(this->canva ,k7Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k8 = new wxButton(this->canva ,k8Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k9 = new wxButton(this->canva ,k9Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k10 = new wxButton(this->canva ,k10Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k11 = new wxButton(this->canva ,k11Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k12 = new wxButton(this->canva ,k12Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k13 = new wxButton(this->canva ,k13Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k14 = new wxButton(this->canva ,k14Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k15 = new wxButton(this->canva ,k15Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    k16 = new wxButton(this->canva ,k16Id,"Toggle",wxPoint(100,100),wxSize(50,50));
+    statek1 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek2 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek3 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek4 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek5 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek6 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek7 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek8 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek9 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek10 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek11 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek12 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek13 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek14 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek15 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    statek16 = new wxStaticText(this->canva ,-1,"OFF",wxPoint(100,100),wxSize(20,20));
+    UpdateState();
+    std::vector<wxStaticText*> relaystatus = {statek1,statek2,statek3,statek4,statek5,statek6,statek7,statek8,statek9,statek10,statek11,statek12,statek13,statek14,statek15,statek16};
+    std::vector<wxButton*> relaybutton = {k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12,k13,k14,k15,k16};
+    std::vector<int> usbcrelayorderframe1 = {0,1,2,3,4,5,6,7};
+    std::vector<int> usbcrelayorderframe2 = {15,14,13,12,11,10,9,8};
+    switch(board){
+        case USBCRELAY:
+            for(int pos : usbcrelayorderframe1){
+                frame1->Add(relaystatus[pos],wxALIGN_CENTER);
+                frame1->Add(relaybutton[pos],wxALIGN_CENTER);
+            }
+            for(int pos : usbcrelayorderframe2){
+                    frame2->Add(relaystatus[pos],wxALIGN_CENTER);
+                    frame2->Add(relaybutton[pos],wxALIGN_CENTER);
+            }
+        break;
+        /*add other 16 relays board layout*/
+    }
+    controlssizer->AddStretchSpacer(1);
+    controlssizer->Add(frame1,0,wxALIGN_CENTER);
+    controlssizer->AddSpacer(20);
+    controlssizer->Add(frame2,0,wxALIGN_CENTER);
+    controlssizer->AddStretchSpacer(1);
+    this->canva->SetSizerAndFit(controlssizer);
+    Layout();
 }
+
 
 void ControlPanel::AddBoard(Serialrelay* board){
     openboards.push_back(board);

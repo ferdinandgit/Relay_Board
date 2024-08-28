@@ -212,30 +212,32 @@ int Serialrelay::initBoard(){
                 break;
                 }
             }
+            return 1;
         break;
         /*
         USBM-Relay-02,04,08 init protcol  
         */
         case USBMRELAY:
             {
-            if (this->send(0x50, 200) != 1) // check  if no error
-                return -1;
-            if (this->recieve(1) == 1) // Receive response not the good board
-                return -1;
-            if (this->send(0x0D, 200) != 1) // check if no error
-                return -1;
-            if (this->recieve(1) == 1) //// Receive response not the good board
-                return -1;    
-            int status;
-            for(int i = 1; i <= relaynumber; i++) {
-                std::vector<int> buffer = {0xA0, i, 0, 0xA0 + i};
-                status = send(buffer, delay);
-                if(status != 1) {
+                if (this->send(0x50, 200) != 1) // check  if no error
                     return -1;
+                if (this->recieve(1) == 1) // Receive response not the good board
+                    return -1;
+                if (this->send(0x0D, 200) != 1) // check if no error
+                    return -1;
+                if (this->recieve(1) == 1) //// Receive response not the good board
+                    return -1;    
+                int status;
+                for(int i = 1; i <= relaynumber; i++) {
+                    std::vector<int> buffer = {0xA0, i, 0, 0xA0 + i};
+                    status = send(buffer, delay);
+                    if(status != 1) {
+                        return -1;
+                    }
                 }
+                return 1;
             }
-            return 1;
-            }
+        break;
         /*
         USBB-Relay init protocol
         */
@@ -256,14 +258,14 @@ int Serialrelay::initBoard(){
             uint8_t data = this->bufferrx[0];
             data = static_cast<int>(data);
             if(data == 0x01){
+                std::vector<int> alloff = {0x0c,0x00,0x00};
+                if(this->send(alloff,200)!=1){
+                    return -1;
+                }
                 return 1;
             }
-            std::vector<int> alloff = {0x0c,0x00,0x00};
-            if(this->send(alloff,200)!=1){
-                return -1;
-            }
             return 1;
-
+        break;
         /*
         In oder to add other init protocol:
         -> add a board in the enum boardtype with a number in serialrelay.hpp

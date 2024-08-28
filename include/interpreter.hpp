@@ -3,6 +3,8 @@
 #include<vector>
 #include <yaml-cpp/yaml.h>
 #include <serialrelay.hpp>
+#include <thread>
+#include <atomic>
 
 typedef struct{
     std::string id;
@@ -26,23 +28,27 @@ typedef struct{
     config configuration;
 }boardprogram;
 
-class Interpreter{
+class Interpreter {
+public:
+    Interpreter(std::string file);
+    int match_conf_prog();
+    int match_hardware(Serialrelay* board, std::string id);
+    std::vector<config> get_conf();
+    std::vector<boardprogram> get_boardprogram();
+    int create_thread();
+    int start_thread();
+    int stop_thread();
 
-    public:
-    
-        Interpreter(std::string);
-        std::vector<config> get_conf();
-        std::vector<boardprogram> get_boardprogram();
-        int match_conf_prog();
-        int match_hardware(Serialrelay * board,std::string id);
-        void generator(); 
+private:
+    YAML::Node prog;
+    std::vector<config> configs;
+    std::vector<boardprogram> boardprograms;
+    std::vector<std::thread> threads;
+    std::atomic<bool> stopFlag;
 
-    private:
-        boardprogram parse_inst(const YAML::Node& instructions);
-        config parse_conf(const YAML::Node& configuration);
-        YAML::Node prog;
-        std::vector<config> configs;
-        std::vector<boardprogram> boardprograms;
-
-
+    boardprogram parse_inst(const YAML::Node& instructions);
+    config parse_conf(const YAML::Node& configuration);
+    void loop_command(boardprogram prog);
+    void no_loop_command(boardprogram prog);
+    void inst_to_command(boardprogram prog, int instructionnumber);
 };
