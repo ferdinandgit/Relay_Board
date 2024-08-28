@@ -6,23 +6,35 @@
 #include <serialrelay.hpp>
 #include <thread>
 #include <atomic>
+bool validateYAML(const YAML::Node& node);
 
 Interpreter::Interpreter(std::string file) : stopFlag(false) {
-    prog = YAML::LoadFile(file);
-    if (prog["config"].IsSequence()) {
-        for (const auto& configuration : prog["config"]) {
-            configs.push_back(this->parse_conf(configuration));
+    try{
+        prog = YAML::LoadFile(file);
+        if(!validateYAML(prog)){
+            configs = {};
+            boardprograms = {};
+            return;
         }
-    } else {
-        configs = {};
+        if (prog["config"].IsSequence()) {
+            for (const auto& configuration : prog["config"]) {
+                configs.push_back(this->parse_conf(configuration));
+            }
+        } else {
+            configs = {};
+        }
+        if (prog["program"].IsSequence()) {
+            for (const auto& board : prog["program"]) {
+                boardprogram myboardprogram = this->parse_inst(board["instructions"]);
+                myboardprogram.id = board["board"].as<std::string>();
+                boardprograms.push_back(myboardprogram);
+            }
+        } else {
+            boardprograms = {};
+        }
     }
-    if (prog["program"].IsSequence()) {
-        for (const auto& board : prog["program"]) {
-            boardprogram myboardprogram = this->parse_inst(board["instructions"]);
-            myboardprogram.id = board["board"].as<std::string>();
-            boardprograms.push_back(myboardprogram);
-        }
-    } else {
+    catch(const YAML::Exception& e){
+        configs = {};
         boardprograms = {};
     }
 }
@@ -187,7 +199,8 @@ int Interpreter::stop_thread() {
 }
 
 int main() {
-    Serialrelay* board1 = new Serialrelay(0, USBRELAY, "COM8");
+    Interpreter program("test.yaml");
+    /*Serialrelay* board1 = new Serialrelay(0, USBRELAY, "COM8");
     board1->openCom();
      if(board1->initBoard()!=1){
         std::cout<<"error";
@@ -207,7 +220,82 @@ int main() {
     program.create_thread();
     program.start_thread();
     std::this_thread::sleep_for(std::chrono::seconds(30));
-    program.stop_thread();
+    program.stop_thread();*/
 
     return 0;
+}
+
+bool validateYAML(const YAML::Node& node) {
+    // Check if "config" and "program" exist and are sequences
+    if (!node["config"] || !node["config"].IsSequence()) {
+        std::cerr << "Error: 'config' section is missing or is not a sequence." << std::endl;
+        return false;
+    }
+    if (!node["program"] || !node["program"].IsSequence()) {
+        std::cerr << "Error: 'program' section is missing or is not a sequence." << std::endl;
+        return false;
+    }
+
+    // Validate the "config" section
+    for (const auto& config : node["config"]) {
+        if (!config["board"] || !config["board"].IsScalar()) {
+            std::cerr << "Error: Each 'config' item must have a 'board' key of string type." << std::endl;
+            return false;
+        }
+        if (!config["relaynumber"] || !config["relaynumber"].IsScalar()) {
+            std::cerr << "Error: Each 'config' item must have a 'relaynumber' key of int type." << std::endl;
+            return false;
+        }
+        if (!config["timebase"] || !config["timebase"].IsScalar()) {
+            std::cerr << "Error: Each 'config' item must have a 'timebase' key of string type." << std::endl;
+            return false;
+        }
+        if (!config["loop"] || !config["loop"].IsScalar()) {
+            std::cerr << "Error: Each 'config' item must have a 'loop' key of bool type." << std::endl;
+            return false;
+        }
+    }
+
+    // Validate the "program" section
+    for (const auto& program : node["program"]) {
+        if (!program["board"] || !program["board"].IsScalar()) {
+            std::cerr << "Error: Each 'program' item must have a 'board' key of string type." << std::endl;
+            return false;
+        }
+        if (!program["instructions"] || !program["instructions"].IsSequence()) {
+            std::cerr << "Error: Each 'program' item must have an 'instructions' key of sequence type." << std::endl;
+            return false;
+        }
+
+        // Validate each instruction
+        for (const auto& instruction : program["instructions"]) {
+            if (!instruction["inst"] || !instruction["inst"].IsScalar()) {
+                std::cerr << "Error: Each instruction must have an 'inst' key of string type." << std::endl;
+                return false;
+            }
+            std::string inst = instruction["inst"].as<std::string>();
+            if (inst == "all" || inst == "k1" || inst == "k2") {
+                if (!instruction["state"] || !instruction["state"].IsScalar()) {
+                    std::cerr << "Error: 'all' or 'kX' instructions must have a 'state' key of int type." << std::endl;
+                    return false;
+                }
+            } else if (inst == "time") {
+                if (!instruction["delay"] || !instruction["delay"].IsScalar()) {
+                    std::cerr << "Error: 'time' instructions must have a 'delay' key of int type." << std::endl;
+                    return false;
+                }
+            } else if (inst == "mask") {
+                if (!instruction["commandarray"] || !instruction["commandarray"].IsSequence()) {
+                    std::cerr << "Error: 'mask' instructions must have a 'commandarray' key of sequence type." << std::endl;
+                    return false;
+                }
+            } else {
+                std::cerr << "Error: Unknown instruction type: " << inst << std::endl;
+                return false;
+            }
+        }
+    }
+
+    // If all checks passed
+    return true;
 }
