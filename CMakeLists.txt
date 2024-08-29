@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+
 project(Seeit_Relay
   LANGUAGES CXX
   VERSION 1.0
@@ -104,4 +105,3 @@ if(WIN32)
 else()
     target_link_libraries(inter PRIVATE wxcore wxnet serial hidusbrelay)
 endif()
-

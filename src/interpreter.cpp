@@ -14,6 +14,7 @@ Interpreter::Interpreter(std::string file) : stopFlag(false) {
         if(!validateYAML(prog)){
             configs = {};
             boardprograms = {};
+            std::cout<<errorString;
             return;
         }
         if (prog["config"].IsSequence()) {
@@ -36,6 +37,7 @@ Interpreter::Interpreter(std::string file) : stopFlag(false) {
     catch(const YAML::Exception& e){
         configs = {};
         boardprograms = {};
+        errorString="Error: Fail to load file check syntax";
     }
 }
 
@@ -83,14 +85,18 @@ int Interpreter::match_conf_prog() {
     }
     for (size_t k = 0; k < configs.size(); k++) {
         for (size_t i = 0; i < configs.size(); i++) {
-            if (configs[k].id == configs[i].id && i != k)
+            if (configs[k].id == configs[i].id && i != k){
+                errorString = "Error : Same board identifier for different config";
                 return -1;
+            }
         }
     }
     for (size_t k = 0; k < boardprograms.size(); k++) {
         for (size_t i = 0; i < boardprograms.size(); i++) {
-            if (boardprograms[k].id == boardprograms[i].id && i != k)
+            if (boardprograms[k].id == boardprograms[i].id && i != k){
+                errorString = "Error : Same board identifier for different program";
                 return -1;
+            }    
         }
     }
     for (size_t k = 0; k < configs.size(); k++) {
@@ -104,6 +110,7 @@ int Interpreter::match_conf_prog() {
     if (validatedmatch == boardprograms.size())
         return 1;
     else
+        errorString = "Error : Please match configs and programs";
         return -1;
 }
 
@@ -114,6 +121,7 @@ int Interpreter::match_hardware(Serialrelay* board, std::string id) {
             return 1;
         }
     }
+    errorString = "Fail to match a program and a hardware device";
     return -1;
 }
 
@@ -131,7 +139,11 @@ void Interpreter::loop_command(boardprogram prog) {
             if (stopFlag) {
                 return;
             } else {
-                inst_to_command(prog, k);
+                if(inst_to_command(prog, k)!=1){
+                    errorString = "Error : " + prog.id + " Failed";
+                    stopFlag = true;
+                    return;   
+                }
             }
         }
     }
@@ -147,7 +159,8 @@ void Interpreter::no_loop_command(boardprogram prog) {
     }
 }
 
-void Interpreter::inst_to_command(boardprogram prog, int instructionnumber) {
+int Interpreter::inst_to_command(boardprogram prog, int instructionnumber){
+    std::regex pattern("^k(1[0-6]|[1-9])$");
     inst instruction = prog.program[instructionnumber];
     Serialrelay* board = prog.board;
     config boardconfig = prog.configuration;
@@ -158,16 +171,34 @@ void Interpreter::inst_to_command(boardprogram prog, int instructionnumber) {
     if (instruction.function == "all") {
         if (instruction.stringparameter == "1") {
             std::vector<int> commandarray(boardconfig.relaynumber, 1);
-            board->setState(commandarray);
+            if(board->setState(commandarray) != 1){
+                return -1;
+            }
         } else {
             std::vector<int> commandarray(boardconfig.relaynumber, 0);
-            board->setState(commandarray);
+           if(board->setState(commandarray) != 1){
+                return -1;
+            }
         }
-    } else if (instruction.function == "time") {
+    } 
+    else if (instruction.function == "time") {
         my_sleep(instruction.intparameter*multiplier);
-    } else if (instruction.function == "mask") {
-        board->setState(instruction.arrayparameter);
+        return 1;
+    } 
+    else if (instruction.function == "mask") {
+        if(board->setState(instruction.arrayparameter) != 1){
+                return -1;
+        }
     }
+    else if(std::regex_match(instruction.function,pattern)){
+        int relay = stoi(instruction.function.substr(1,1));
+        std::vector<int> commandarray = board->getState();
+        commandarray[relay-1] = instruction.intparameter;
+       if(board->setState(commandarray) != 1){
+                return -1;
+            }
+    }
+    return 1;
 }
 
 int Interpreter::create_thread() {
@@ -179,6 +210,10 @@ int Interpreter::create_thread() {
                 threads.emplace_back(&Interpreter::no_loop_command, this, boardprograms[k]);
             }
         }
+    }
+    if(threads.empty()){
+        errorString = "Error: No thread to start";
+        return -1;
     }
     return 1;
 }
@@ -199,8 +234,7 @@ int Interpreter::stop_thread() {
 }
 
 int main() {
-    Interpreter program("test.yaml");
-    /*Serialrelay* board1 = new Serialrelay(0, USBRELAY, "COM8");
+    Serialrelay* board1 = new Serialrelay(0, USBRELAY, "COM8");
     board1->openCom();
      if(board1->initBoard()!=1){
         std::cout<<"error";
@@ -220,38 +254,48 @@ int main() {
     program.create_thread();
     program.start_thread();
     std::this_thread::sleep_for(std::chrono::seconds(30));
-    program.stop_thread();*/
+    program.stop_thread();
 
     return 0;
 }
 
-bool validateYAML(const YAML::Node& node) {
+std::string Interpreter::get_errorString(){
+    return errorString;
+}
+
+
+bool Interpreter::validateYAML(const YAML::Node& node) {
     // Check if "config" and "program" exist and are sequences
     if (!node["config"] || !node["config"].IsSequence()) {
-        std::cerr << "Error: 'config' section is missing or is not a sequence." << std::endl;
+        errorString = "Error: 'config' section is missing or is not a sequence.";
         return false;
     }
     if (!node["program"] || !node["program"].IsSequence()) {
-        std::cerr << "Error: 'program' section is missing or is not a sequence." << std::endl;
+        errorString = "Error: 'program' section is missing or is not a sequence.";
         return false;
     }
 
     // Validate the "config" section
     for (const auto& config : node["config"]) {
         if (!config["board"] || !config["board"].IsScalar()) {
-            std::cerr << "Error: Each 'config' item must have a 'board' key of string type." << std::endl;
+            errorString = "Error: Each 'config' item must have a 'board' key of string type.";
             return false;
         }
         if (!config["relaynumber"] || !config["relaynumber"].IsScalar()) {
-            std::cerr << "Error: Each 'config' item must have a 'relaynumber' key of int type." << std::endl;
+            errorString = "Error: Each 'config' item must have a 'relaynumber' key of int type.";
             return false;
         }
         if (!config["timebase"] || !config["timebase"].IsScalar()) {
-            std::cerr << "Error: Each 'config' item must have a 'timebase' key of string type." << std::endl;
+            errorString = "Error: Each 'config' item must have a 'timebase' key of string type.";
+            return false;
+        }
+        std::string timebase = config["timebase"].as<std::string>();
+        if (timebase != "ms" && timebase != "s") {
+            errorString = "Error: 'timebase' must be either 'ms' or 's'. Found: " + timebase;
             return false;
         }
         if (!config["loop"] || !config["loop"].IsScalar()) {
-            std::cerr << "Error: Each 'config' item must have a 'loop' key of bool type." << std::endl;
+            errorString = "Error: Each 'config' item must have a 'loop' key of bool type.";
             return false;
         }
     }
@@ -259,38 +303,69 @@ bool validateYAML(const YAML::Node& node) {
     // Validate the "program" section
     for (const auto& program : node["program"]) {
         if (!program["board"] || !program["board"].IsScalar()) {
-            std::cerr << "Error: Each 'program' item must have a 'board' key of string type." << std::endl;
+            errorString = "Error: Each 'program' item must have a 'board' key of string type.";
             return false;
         }
         if (!program["instructions"] || !program["instructions"].IsSequence()) {
-            std::cerr << "Error: Each 'program' item must have an 'instructions' key of sequence type." << std::endl;
+            errorString = "Error: Each 'program' item must have an 'instructions' key of sequence type.";
             return false;
         }
 
         // Validate each instruction
         for (const auto& instruction : program["instructions"]) {
             if (!instruction["inst"] || !instruction["inst"].IsScalar()) {
-                std::cerr << "Error: Each instruction must have an 'inst' key of string type." << std::endl;
+                errorString = "Error: Each instruction must have an 'inst' key of string type.";
                 return false;
             }
             std::string inst = instruction["inst"].as<std::string>();
-            if (inst == "all" || inst == "k1" || inst == "k2") {
+
+            if (inst == "all" || std::regex_match(inst, std::regex("^k(1[0-6]|[1-9])$"))) {
+                // Validate 'state' for instructions 'all' and 'k1' to 'k16'
                 if (!instruction["state"] || !instruction["state"].IsScalar()) {
-                    std::cerr << "Error: 'all' or 'kX' instructions must have a 'state' key of int type." << std::endl;
+                    errorString = "Error: '" + inst + "' instructions must have a 'state' key of int type.";
+                    return false;
+                }
+                // Check that 'state' can be interpreted as an integer
+                try {
+                    instruction["state"].as<int>();
+                } catch (const YAML::Exception&) {
+                    errorString = "Error: 'state' must be an integer for '" + inst + "' instruction.";
                     return false;
                 }
             } else if (inst == "time") {
+                // Validate 'delay' for 'time' instructions
                 if (!instruction["delay"] || !instruction["delay"].IsScalar()) {
-                    std::cerr << "Error: 'time' instructions must have a 'delay' key of int type." << std::endl;
+                    errorString = "Error: 'time' instructions must have a 'delay' key of int type.";
+                    return false;
+                }
+                // Check that 'delay' can be interpreted as an integer
+                try {
+                    instruction["delay"].as<int>();
+                } catch (const YAML::Exception&) {
+                    errorString = "Error: 'delay' must be an integer for 'time' instruction.";
                     return false;
                 }
             } else if (inst == "mask") {
+                // Validate 'commandarray' for 'mask' instructions
                 if (!instruction["commandarray"] || !instruction["commandarray"].IsSequence()) {
-                    std::cerr << "Error: 'mask' instructions must have a 'commandarray' key of sequence type." << std::endl;
+                    errorString = "Error: 'mask' instructions must have a 'commandarray' key of sequence type.";
                     return false;
                 }
+                // Check that all elements in "commandarray" are integers
+                for (const auto& value : instruction["commandarray"]) {
+                    if (!value.IsScalar()) {
+                        errorString = "Error: All elements in 'commandarray' must be of int type.";
+                        return false;
+                    }
+                    try {
+                        value.as<int>();
+                    } catch (const YAML::Exception&) {
+                        errorString = "Error: All elements in 'commandarray' must be integers.";
+                        return false;
+                    }
+                }
             } else {
-                std::cerr << "Error: Unknown instruction type: " << inst << std::endl;
+                errorString = "Error: Unknown instruction type: " + inst;
                 return false;
             }
         }
