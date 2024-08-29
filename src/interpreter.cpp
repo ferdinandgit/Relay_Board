@@ -138,7 +138,8 @@ void Interpreter::loop_command(boardprogram prog) {
         for (size_t k = 0; k < prog.program.size(); k++) {
             if (stopFlag) {
                 return;
-            } else {
+            } 
+            else {
                 if(inst_to_command(prog, k)!=1){
                     errorString = "Error : " + prog.id + " Failed";
                     stopFlag = true;
@@ -153,8 +154,13 @@ void Interpreter::no_loop_command(boardprogram prog) {
     for (size_t k = 0; k < prog.program.size(); k++) {
         if (stopFlag) {
             return;
-        } else {
-            inst_to_command(prog, k);
+        } 
+        else {
+            if(inst_to_command(prog, k)!=1){
+                errorString = "Error : " + prog.id + " Failed";
+                stopFlag = true;
+                return;   
+            }
         }
     }
 }
@@ -231,32 +237,6 @@ int Interpreter::start_thread() {
 int Interpreter::stop_thread() {
     stopFlag = true;
     return 1;
-}
-
-int main() {
-    Serialrelay* board1 = new Serialrelay(0, USBRELAY, "COM8");
-    board1->openCom();
-     if(board1->initBoard()!=1){
-        std::cout<<"error";
-    }
-    
-    Serialrelay* board2 = new Serialrelay(1, USBRELAY, "COM9");
-    board2->openCom();
-    if(board2->initBoard()!=1){
-        std::cout<<"error";
-    }
-     
-    Interpreter program("test.yaml");
-    program.match_conf_prog();
-    program.match_hardware(board1, "board1");
-    program.match_hardware(board2, "board2");
-
-    program.create_thread();
-    program.start_thread();
-    std::this_thread::sleep_for(std::chrono::seconds(30));
-    program.stop_thread();
-
-    return 0;
 }
 
 std::string Interpreter::get_errorString(){

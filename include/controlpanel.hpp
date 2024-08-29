@@ -4,6 +4,7 @@
 #include <serialrelay.hpp>
 #include <drawingcanva.hpp>
 #include <wx/listctrl.h>
+#include <interpreter.hpp>
 
 
 class ControlPanel : public wxPanel {
@@ -24,6 +25,7 @@ public:
     void BoardControlsbuild();
     void AssignToBoard(int id);
     void AssignToNull();
+    void SelectedItem(int id);
     
      
 
@@ -37,6 +39,12 @@ private:
     void UpdateState();
 
     void OntestButton(wxCommandEvent &event);
+    void OnbrowseButton(wxCommandEvent &event);
+    void OnloadButton(wxCommandEvent &event);
+    void OnaddButton(wxCommandEvent &event);
+    void OnclearButton(wxCommandEvent &event);
+    void OnstartButton(wxCommandEvent &event);
+    void OnstopButton(wxCommandEvent &event);
     void OnK1(wxCommandEvent &event);
     void OnK2(wxCommandEvent &event);
     void OnK3(wxCommandEvent &event);
@@ -53,14 +61,23 @@ private:
     void OnK14(wxCommandEvent &event);
     void OnK15(wxCommandEvent &event);
     void OnK16(wxCommandEvent &event);
-    Serialrelay* activeboard; 
+    
+    Serialrelay* activeboard;
+    Interpreter* interpreter; 
     DrawingCanva* canva;
     wxPanel* programmerpanel;
     wxPanel* testpanel;
     wxPanel* displayPanel;
-    wxListCtrl* program;
     std::vector<Serialrelay*> openboards;
+    int selecteditem;
+    
     wxButton* testButton;
+    wxButton* browseButton;
+    wxButton* loadButton;
+    wxButton* addButton;
+    wxButton* clearButton;
+    wxButton* startButton;
+    wxButton* stopButton;
     wxButton* k1;
     wxButton* k2;
     wxButton* k3;
@@ -77,6 +94,7 @@ private:
     wxButton* k14;
     wxButton* k15;
     wxButton* k16;
+
     wxStaticText* testrelaytext;
     wxStaticText* statek1;
     wxStaticText* statek2;
@@ -94,6 +112,12 @@ private:
     wxStaticText* statek14;
     wxStaticText* statek15;
     wxStaticText* statek16;
+
+    wxTextCtrl* m_filePathCtrl;
+
+    wxListCtrl* m_listCtrl1;
+    wxListCtrl* m_listCtrl2;
+
     wxDECLARE_EVENT_TABLE();
 };
 
@@ -114,5 +138,11 @@ enum ControlpanelButtonId{
     k14Id = wxID_LAST + 19,
     k15Id = wxID_LAST + 20,
     k16Id = wxID_LAST + 21,
-    testButtonId = wxID_LAST + 22
+    testButtonId = wxID_LAST + 22,
+    loadButtonID = wxID_LAST + 23,
+    addButtonID  = wxID_LAST + 24,
+    clearButtonID = wxID_LAST + 25,
+    startButtonID = wxID_LAST + 26,
+    stopButtonID  = wxID_LAST + 27,
+    browseButtonID = wxID_LAST + 28
 };

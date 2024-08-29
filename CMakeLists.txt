@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 project(Seeit_Relay
   LANGUAGES CXX
@@ -47,6 +47,7 @@ file(GLOB_RECURSE SOURCES
             ${CMAKE_CURRENT_SOURCE_DIR}/src/controlpanel.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/drawingcanva.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/serialrelay.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter.cpp
             )
 
 
@@ -86,22 +87,13 @@ target_include_directories(main PUBLIC
 
 
 if(WIN32)
-    target_link_libraries(main PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
+    target_link_libraries(main PUBLIC wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH} yaml-cpp::yaml-cpp)
     add_custom_command(TARGET main POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${HIDRELAY_DLL_PATH}"
         $<TARGET_FILE_DIR:main>)
 else()
-    target_link_libraries(main PRIVATE wxcore wxnet serial hidusbrelay)
+    target_link_libraries(main PUBLIC wxcore wxnet serial hidusbrelay yaml-cpp::yaml-cpp)
 endif()
 
 
-add_executable(inter ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/serialrelay.cpp)
-target_link_libraries(inter PUBLIC yaml-cpp::yaml-cpp)
-target_include_directories(inter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-if(WIN32)
-    target_link_libraries(inter PRIVATE wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH})
-else()
-    target_link_libraries(inter PRIVATE wxcore wxnet serial hidusbrelay)
-endif()

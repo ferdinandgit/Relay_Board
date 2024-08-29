@@ -109,7 +109,7 @@ void MainFrame::CreateControls(){
     //Relay panel ctrl 
     wxBoxSizer* sizerrelaypanel = new wxBoxSizer(wxHORIZONTAL);
     relaypanel->SetSizer(sizerrelaypanel);
-    this->relaylist = new wxListCtrl(relaypanel,listctrlid, wxDefaultPosition,wxDefaultSize, wxLC_REPORT|wxRAISED_BORDER|wxLC_VRULES);
+    this->relaylist = new wxListCtrl(relaypanel,listctrlid, wxDefaultPosition,wxDefaultSize, wxLC_REPORT|wxRAISED_BORDER| wxLC_SINGLE_SEL);
     sizerrelaypanel->Add(relaylist, 1, wxGROW, 0);
     this->relaylist->InsertColumn(0, _("id"), wxLIST_FORMAT_LEFT, 30);
     this->relaylist->InsertColumn(1, _("port"),wxLIST_FORMAT_LEFT,50);
@@ -319,8 +319,8 @@ void MainFrame::OnTestMode(wxCommandEvent& event){
 
 void MainFrame::OnProgrammerMode(wxCommandEvent& event){
     manual=0;
-    programmer=0;
-    test=1;
+    programmer=1;
+    test=0;
     controlpanel->CreateProgrammerlayout();
     controlpanel->CreateProgrammerControls();
 }
@@ -369,9 +369,14 @@ void MainFrame::GetDevices(){
     }
 }
 
+void MainFrame::OnItemSelected(wxListEvent& event){
+    int selectedItem = event.GetIndex();
+    int id = wxAtoi(relaylist->GetItemText(selectedItem, 0));
+    controlpanel->SelectedItem(id);
+}
 
 // Event Table
-wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
+wxBEGIN_EVENT_TABLE(MainFrame, wxFrame) 
     EVT_BUTTON(addbuttonId, MainFrame::OnAdd)
     EVT_BUTTON(clearbuttonId, MainFrame::OnClear)
     EVT_BUTTON(manualmodebuttonId, MainFrame::OnManualMode)
@@ -379,4 +384,5 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_BUTTON(progammermodebuttonId, MainFrame::OnProgrammerMode)
     EVT_TIMER(timerid, MainFrame::OnTimer)
     EVT_LIST_ITEM_ACTIVATED(listctrlid,MainFrame::DoubleClickItem)
+    EVT_LIST_ITEM_SELECTED(listctrlid,MainFrame::OnItemSelected)
 wxEND_EVENT_TABLE()

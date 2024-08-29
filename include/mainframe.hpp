@@ -21,7 +21,7 @@ private:
     void OnProgrammerMode(wxCommandEvent& event);
     void OnTimer(wxTimerEvent& event);
     void DoubleClickItem(wxListEvent& event); 
-
+    void OnItemSelected(wxListEvent& event);
     void  GetDevices();
     
     int manual = 1;

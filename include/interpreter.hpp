@@ -46,7 +46,7 @@ private:
     std::vector<boardprogram> boardprograms;
     std::vector<std::thread> threads;
     std::atomic<bool> stopFlag;
-    std::string errorString;
+    std::string errorString = "";
 
     boardprogram parse_inst(const YAML::Node& instructions);
     config parse_conf(const YAML::Node& configuration);

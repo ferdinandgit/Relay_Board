@@ -4,6 +4,7 @@
 #include <wx/listctrl.h>
 #include <drawingcanva.hpp>
 #include <wx/grid.h>
+#include <interpreter.hpp>
 
 
 ControlPanel::ControlPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size): wxPanel(parent, id, pos, size){
@@ -34,16 +35,16 @@ void ControlPanel::CreateProgrammerlayout(){
 
 void ControlPanel::CreateProgrammerControls(){
     // Create the text control and browse button
-    wxTextCtrl* m_filePathCtrl = new wxTextCtrl(programmerpanel, wxID_ANY, "", wxDefaultPosition, wxSize(300, 25));
-    wxButton* browseButton = new wxButton(programmerpanel, wxID_ANY, "Browse...", wxDefaultPosition, wxSize(80, 25));
+    m_filePathCtrl = new wxTextCtrl(programmerpanel, wxID_ANY, "", wxDefaultPosition, wxSize(300, 25));
+    browseButton = new wxButton(programmerpanel,browseButtonID, "Browse...", wxDefaultPosition, wxSize(80, 25));
     wxBoxSizer* topSizer = new wxBoxSizer(wxHORIZONTAL);
     topSizer->Add(m_filePathCtrl, 1, wxEXPAND | wxALL, 5);
     topSizer->Add(browseButton, 0, wxALL, 5);
 
     // Create the Load button, and Add/Clear buttons
-    wxButton* loadButton = new wxButton(programmerpanel, wxID_ANY, "Load", wxDefaultPosition, wxSize(80, 25));
-    wxButton* addButton = new wxButton(programmerpanel, wxID_ANY, "Add", wxDefaultPosition, wxSize(80, 25));
-    wxButton* clearButton = new wxButton(programmerpanel, wxID_ANY, "Clear", wxDefaultPosition, wxSize(80, 25));
+    loadButton = new wxButton(programmerpanel, loadButtonID, "Load", wxDefaultPosition, wxSize(80, 25));
+    addButton = new wxButton(programmerpanel, addButtonID, "Add", wxDefaultPosition, wxSize(80, 25));
+    clearButton = new wxButton(programmerpanel, clearButtonID, "Clear", wxDefaultPosition, wxSize(80, 25));
 
     // Create titles for the lists
     wxStaticText* title1 = new wxStaticText(programmerpanel, wxID_ANY, "Program Board ID", wxDefaultPosition, wxDefaultSize);
@@ -57,12 +58,16 @@ void ControlPanel::CreateProgrammerControls(){
     buttonSizer->Add(clearButton, 0, wxALL, 5);   // Align with right list
 
     // Create the list controls
-    wxListCtrl* m_listCtrl1 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(200, 150), wxLC_REPORT);
-    wxListCtrl* m_listCtrl2 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(200, 150), wxLC_REPORT);
+    m_listCtrl1 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(200, 150), wxLC_REPORT);
+    m_listCtrl2 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(200, 150), wxLC_REPORT);
 
     // Add columns to the list controls
-    m_listCtrl1->InsertColumn(0, "Items");
-    m_listCtrl2->InsertColumn(0, "Items");
+    m_listCtrl1->InsertColumn(0, "Name");
+    m_listCtrl1->InsertColumn(1, "Relaynumber");
+    m_listCtrl1->InsertColumn(2, "Timebase");
+    m_listCtrl1->InsertColumn(3, "loop");
+    m_listCtrl2->InsertColumn(0, "Id");
+    m_listCtrl2->InsertColumn(0, "Type");
 
     // Create a sizer to hold the titles and lists
     wxBoxSizer* listSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -79,13 +84,13 @@ void ControlPanel::CreateProgrammerControls(){
     listSizer->Add(rightListSizer, 1, wxEXPAND | wxALL, 5);     // Add right list and title
 
     // Create the Start and Stop buttons
-    wxButton* startButton = new wxButton(programmerpanel, wxID_ANY, "Start", wxDefaultPosition, wxSize(80, 25));
-    wxButton* stopButton = new wxButton(programmerpanel, wxID_ANY, "Stop", wxDefaultPosition, wxSize(80, 25));
+    startButton = new wxButton(programmerpanel, wxID_ANY, "Start", wxDefaultPosition, wxSize(80, 25));
+    stopButton = new wxButton(programmerpanel, wxID_ANY, "Stop", wxDefaultPosition, wxSize(80, 25));
 
     // Create a sizer for the Start and Stop buttons
     wxBoxSizer* buttonSizer2 = new wxBoxSizer(wxHORIZONTAL);
-    buttonSizer2->Add(startButton, 1, wxEXPAND | wxALL, 5);  // Expand to fill half the space
-    buttonSizer2->Add(stopButton, 1, wxEXPAND | wxALL, 5);   // Expand to fill half the space
+    buttonSizer2->Add(startButton, startButtonID, wxEXPAND | wxALL, 5);  // Expand to fill half the space
+    buttonSizer2->Add(stopButton, stopButtonID, wxEXPAND | wxALL, 5);   // Expand to fill half the space
 
     // Create the main sizer and add all components to it
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -312,7 +317,7 @@ void ControlPanel::Relay8Controls(relayboard board){
 }
 
 void ControlPanel::Relay16Contols(relayboard board){
-      int panelwidth = canva->getrelaywidth()+canva->getstep()/2;
+    int panelwidth = canva->getrelaywidth()+canva->getstep()/2;
     int panellenght = canva->getrelaylenght()/2+canva->getstep()/2;
     wxBoxSizer* controlssizer = new wxBoxSizer(wxHORIZONTAL);
     wxGridSizer *frame1 = new wxGridSizer(8,2,30,10);
@@ -438,6 +443,59 @@ void ControlPanel::OntestButton(wxCommandEvent &event){
     }
         
 }
+
+void ControlPanel::OnbrowseButton(wxCommandEvent &event){
+    wxFileDialog openFileDialog(this, _("Open file"), "", "",
+                                "All files (*.*)|*.*", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
+        return;
+    wxString filePath = openFileDialog.GetPath();
+    m_filePathCtrl->SetValue(filePath);
+}
+
+void ControlPanel::OnloadButton(wxCommandEvent &event){
+    std::string filePath = m_filePathCtrl->GetValue().ToStdString();
+    interpreter = new Interpreter(filePath);
+    if(interpreter->get_errorString() != ""){
+        wxMessageBox(interpreter->get_errorString(), "Error", wxOK | wxICON_ERROR);
+    }
+    if(interpreter->match_conf_prog() != 1){
+        wxMessageBox(interpreter->get_errorString(), "Error", wxOK | wxICON_ERROR);
+    }
+    
+    for(boardprogram prog : interpreter->get_boardprogram()){
+        long itemIndex = m_listCtrl1->InsertItem(m_listCtrl1->GetItemCount(), wxString(prog.configuration.id));
+        m_listCtrl1->SetItem(itemIndex, 1, wxString(std::to_string(prog.configuration.relaynumber)));
+        m_listCtrl1->SetItem(itemIndex, 2, wxString(prog.configuration.timebase));
+        if(prog.configuration.loop){
+            m_listCtrl1->SetItem(itemIndex, 3, wxString("True"));
+        }
+        else{
+            m_listCtrl1->SetItem(itemIndex, 3, wxString("False"));
+        }
+    }
+}
+
+void ControlPanel::OnaddButton(wxCommandEvent &event){
+    Serialrelay* selectedboard = openboards[selecteditem];
+    long itemIndex = m_listCtrl2->InsertItem(m_listCtrl2->GetItemCount(), wxString(std::to_string(selectedboard->getId())));
+    
+
+}
+
+void ControlPanel::OnclearButton(wxCommandEvent &event){
+
+}
+
+void ControlPanel::OnstartButton(wxCommandEvent &event){
+
+}
+
+void ControlPanel::OnstopButton(wxCommandEvent &event){
+
+}
+
+
 void ControlPanel::OnK1(wxCommandEvent &event){
     std::vector<int> command = activeboard->getState();
     command[0]=!command[0];
@@ -550,8 +608,18 @@ void ControlPanel::OnK16(wxCommandEvent &event){
     UpdateState();
 }
 
+void ControlPanel::SelectedItem(int id){
+    selecteditem=id;
+}
+
 wxBEGIN_EVENT_TABLE(ControlPanel, wxPanel)
     EVT_BUTTON(testButtonId, ControlPanel::OntestButton)
+    EVT_BUTTON(browseButtonID, ControlPanel::OnbrowseButton)
+    EVT_BUTTON(loadButtonID, ControlPanel::OnloadButton)
+    EVT_BUTTON(addButtonID, ControlPanel::OnaddButton)
+    EVT_BUTTON(clearButtonID, ControlPanel::OnclearButton)
+    EVT_BUTTON(startButtonID, ControlPanel::OnstartButton)
+    EVT_BUTTON(stopButtonID, ControlPanel::OnstopButton)
     EVT_BUTTON(k1Id, ControlPanel::OnK1)
     EVT_BUTTON(k2Id, ControlPanel::OnK2)
     EVT_BUTTON(k3Id, ControlPanel::OnK3)
