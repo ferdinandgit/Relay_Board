@@ -7,6 +7,8 @@
 #include <serialrelay.hpp>
 #include <wx/timer.h>
 #include <usb_relay_device.hpp>
+#include <wx/bitmap.h>
+#include <wx/image.h>
 
 static int id = 0; 
 
@@ -67,30 +69,45 @@ void MainFrame::CreateControls(){
     int buttonwidth = 75;
     int buttonhight = 75;
     auto buttonsize = wxSize(75,75);
-    //menu panel controls 
+    auto logosize = wxSize(190,75);
+    //menu panel controls
+    
+    wxBoxSizer* menupanelsizer = new wxBoxSizer(wxHORIZONTAL);
     wxBitmap manualicon;
     manualicon.LoadFile("iconmanual.bmp", wxBITMAP_TYPE_BMP);
-    this->manualmodebutton = new wxBitmapButton(this->menupanel,manualmodebuttonId,manualicon, wxPoint(0,0),buttonsize, 0);
+    manualmodebutton = new wxBitmapButton(menupanel,manualmodebuttonId,manualicon, wxPoint(0,0),buttonsize, 0);
     wxBitmap programmericon;
     programmericon.LoadFile("prog.bmp", wxBITMAP_TYPE_BMP);
-    this->progammermodebutton = new wxBitmapButton(this->menupanel,progammermodebuttonId,programmericon, wxPoint(buttonwidth,0),buttonsize, 0);
+    progammermodebutton = new wxBitmapButton(menupanel,progammermodebuttonId,programmericon, wxPoint(buttonwidth,0),buttonsize, 0);
     wxBitmap testicon;
     testicon.LoadFile("test.bmp", wxBITMAP_TYPE_BMP);
-    this->testmodebutton = new wxBitmapButton(this->menupanel,testmodebuttonId,testicon, wxPoint(buttonwidth*2,0),buttonsize, 0);
+    testmodebutton = new wxBitmapButton(menupanel,testmodebuttonId,testicon, wxPoint(buttonwidth*2,0),buttonsize, 0);
+    wxBitmap logo;
+    logo.LoadFile("logo.bmp", wxBITMAP_TYPE_BMP);
+    logobutton = new wxBitmapButton(menupanel,logobuttonId,logo, wxPoint(buttonwidth*4,0),logosize, 0);
+    menupanelsizer->Add(manualmodebutton,0,wxEXPAND|wxALL,1);
+    menupanelsizer->Add(progammermodebutton,0,wxEXPAND|wxALL,1);
+    menupanelsizer->Add(testmodebutton,0,wxEXPAND|wxALL,1);
+    menupanelsizer->AddStretchSpacer(1);
+    menupanelsizer->Add(logobutton,0,wxEXPAND|wxALL,0);
+    menupanel->SetSizerAndFit(menupanelsizer);
+    
+    
     //manager panel control 
-    wxBitmap addicon;
-    addicon.LoadFile("add.bmp", wxBITMAP_TYPE_BMP);
-    this->addbutton = new wxBitmapButton(this->managerpanel,addbuttonId, addicon, wxPoint(0,0),buttonsize, 0);
-    wxBitmap clearicon;
-    clearicon.LoadFile("clear.bmp", wxBITMAP_TYPE_BMP);
-    this->clearbutton = new wxBitmapButton(this->managerpanel,clearbuttonId, clearicon, wxPoint(buttonwidth,0),buttonsize, 0);
-   
+
+    wxBoxSizer* hmanagerpanelsizer = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* vmanagerpanelsizer = new wxBoxSizer(wxVERTICAL);
+
+    addbutton =  new wxButton(managerpanel,addbuttonId,"Add",wxDefaultPosition,buttonsize, 0);
+    clearbutton = new wxButton(managerpanel,clearbuttonId,"Remove", wxDefaultPosition,buttonsize, 0);
+    refreshbutton = new wxButton(managerpanel,refreshbuttonId,"Refresh", wxDefaultPosition,buttonsize, 0);
+
     wxArrayString boardtypelist;
     std::vector<std::string> boardref = {"USB-RELAY","USBB-RELAY","USBM-RELAY","USBC-RELAY"};
     for(auto ref : boardref){
         boardtypelist.Add(wxString(ref));
     }
-    boardtype = new wxComboBox(this->managerpanel, -1, wxT("type"), wxPoint(buttonwidth*2,0),wxSize(120,100),boardtypelist);
+    boardtype = new wxComboBox(managerpanel, -1, wxT("type"), wxPoint(buttonwidth*2,0),wxDefaultSize,boardtypelist);
 
     wxArrayString relaynumberlist;
     relaynumberlist.Add(wxT("1"));
@@ -98,12 +115,20 @@ void MainFrame::CreateControls(){
     relaynumberlist.Add(wxT("4"));
     relaynumberlist.Add(wxT("8"));
     relaynumberlist.Add(wxT("16"));
-    boardrelaynumber = new wxComboBox(this->managerpanel, -1, wxT("relaynumber"), wxPoint(buttonwidth*2+120,0),wxSize(120,100),relaynumberlist);
+    boardrelaynumber = new wxComboBox(managerpanel, -1, wxT("relaynumber"), wxPoint(buttonwidth*2,44),wxDefaultSize,relaynumberlist);
 
 
-    port = new wxComboBox(this->managerpanel, -1, wxT("usbdev"), wxPoint(buttonwidth*2,22),wxSize(120,100));
+    port = new wxComboBox(managerpanel, -1, wxT("usbdev"), wxPoint(buttonwidth*2,22),wxDefaultSize);
     GetDevices();
-
+    vmanagerpanelsizer->Add(boardtype,1,wxEXPAND|wxALL,1);
+    vmanagerpanelsizer->Add(port,1,wxEXPAND|wxALL,1);
+    vmanagerpanelsizer->Add(boardrelaynumber,1,wxEXPAND|wxALL,1);
+    hmanagerpanelsizer->Add(addbutton,0,wxEXPAND|wxALL,1);
+    hmanagerpanelsizer->Add(clearbutton,0,wxEXPAND|wxALL,1);
+    hmanagerpanelsizer->Add(refreshbutton,0,wxEXPAND|wxALL,1);
+    hmanagerpanelsizer->AddStretchSpacer(1);
+    hmanagerpanelsizer->Add(vmanagerpanelsizer);
+    managerpanel->SetSizer(hmanagerpanelsizer);
 
 
     //Relay panel ctrl 
@@ -376,6 +401,19 @@ void MainFrame::OnItemSelected(wxListEvent& event){
     controlpanel->SelectedItem(id);
 }
 
+void MainFrame::OnLogo(wxCommandEvent& event){
+    wxString message = 
+            "SEEIT\n"
+            "Phone : 04 73 31 15 15\n"
+            "Email: contact@seeit.fr";
+        wxMessageBox(message, "Contact Information", wxOK | wxICON_INFORMATION);
+}
+
+void MainFrame::OnRefresh(wxCommandEvent& event){
+    GetDevices();
+
+}
+
 // Event Table
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame) 
     EVT_BUTTON(addbuttonId, MainFrame::OnAdd)
@@ -383,6 +421,8 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_BUTTON(manualmodebuttonId, MainFrame::OnManualMode)
     EVT_BUTTON(testmodebuttonId, MainFrame::OnTestMode)
     EVT_BUTTON(progammermodebuttonId, MainFrame::OnProgrammerMode)
+    EVT_BUTTON(logobuttonId, MainFrame::OnLogo)
+    EVT_BUTTON(refreshbuttonId, MainFrame::OnRefresh)
     EVT_TIMER(timerid, MainFrame::OnTimer)
     EVT_LIST_ITEM_ACTIVATED(listctrlid,MainFrame::DoubleClickItem)
     EVT_LIST_ITEM_SELECTED(listctrlid,MainFrame::OnItemSelected)

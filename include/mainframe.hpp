@@ -22,6 +22,8 @@ private:
     void OnTimer(wxTimerEvent& event);
     void DoubleClickItem(wxListEvent& event); 
     void OnItemSelected(wxListEvent& event);
+    void OnLogo(wxCommandEvent& event);
+    void OnRefresh(wxCommandEvent& event);
     void  GetDevices();
     
     int manual = 1;
@@ -38,8 +40,10 @@ private:
     wxBitmapButton *manualmodebutton;
     wxBitmapButton *progammermodebutton;
     wxBitmapButton *testmodebutton;
-    wxBitmapButton *addbutton;
-    wxBitmapButton *clearbutton;
+    wxButton *addbutton;
+    wxButton *clearbutton;
+    wxButton *logobutton; 
+    wxButton* refreshbutton;
     wxListCtrl *relaylist; 
     wxComboBox *baudrate; 
     wxComboBox *boardtype;
@@ -49,6 +53,7 @@ private:
 };
 
 enum EltId {
+    logobuttonId = wxID_LAST,
     clearbuttonId = wxID_LAST + 1,
     addbuttonId = wxID_LAST + 2,
     testmodebuttonId = wxID_LAST + 3,
@@ -56,6 +61,7 @@ enum EltId {
     manualmodebuttonId = wxID_LAST + 5,
     timerid = wxID_LAST + 6,
     listctrlid = wxID_LAST +7,
+    refreshbuttonId = wxID_LAST+8
 };
 
 
