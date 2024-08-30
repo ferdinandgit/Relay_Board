@@ -20,12 +20,14 @@ void ControlPanel::InitControlPanel(){
 }
 
 void ControlPanel::CreateManuallayout(int relaynumber,relayboard board){
+    CleanAfterProgrammer();
     this->DestroyChildren();
     this->canva = new DrawingCanva(relaynumber,board,this, wxID_ANY, wxDefaultPosition,this->GetSize());
     this->GetSizer()->Add(canva,1,wxEXPAND);
 }
 
 void ControlPanel::CreateProgrammerlayout(){
+    CleanAfterProgrammer();
     this->DestroyChildren();
     programmerpanel = new wxPanel(this,wxID_ANY,wxDefaultPosition,this->GetSize());
     programmerpanel->SetBackgroundColour(wxColour(100,100,100));
@@ -45,7 +47,7 @@ void ControlPanel::CreateProgrammerControls(){
     loadButton = new wxButton(programmerpanel, loadButtonID, "Load", wxDefaultPosition, wxSize(80, 25));
     addButton = new wxButton(programmerpanel, addButtonID, "Add", wxDefaultPosition, wxSize(80, 25));
     clearButton = new wxButton(programmerpanel, clearButtonID, "Clear", wxDefaultPosition, wxSize(80, 25));
-
+    blankButton = new wxButton(programmerpanel, blankButtonID, "Free", wxDefaultPosition, wxSize(80, 25));
     // Create titles for the lists
     wxStaticText* title1 = new wxStaticText(programmerpanel, wxID_ANY, "Program Board ID", wxDefaultPosition, wxDefaultSize);
     wxStaticText* title2 = new wxStaticText(programmerpanel, wxID_ANY, "Hardware Board", wxDefaultPosition, wxDefaultSize);
@@ -53,7 +55,8 @@ void ControlPanel::CreateProgrammerControls(){
     // Create sizers to align the Load, Add, and Clear buttons above the lists
     wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
     buttonSizer->Add(loadButton, 0, wxALL, 5);    // Align with left list
-    buttonSizer->AddStretchSpacer(1);             // Add a spacer between the buttons
+    buttonSizer->AddStretchSpacer(1); 
+    buttonSizer->Add(blankButton, 0, wxALL, 5);            // Add a spacer between the buttons
     buttonSizer->Add(addButton, 0, wxALL, 5);     // Align with right list
     buttonSizer->Add(clearButton, 0, wxALL, 5);   // Align with right list
 
@@ -128,6 +131,7 @@ void ControlPanel::CreateManualControls(int relaynumber,relayboard board){
 }
 
 void ControlPanel::CreateTestlayout(){
+    CleanAfterProgrammer();
     this->DestroyChildren();
     testpanel = new wxPanel(this,wxID_ANY,wxDefaultPosition,this->GetSize());
     testpanel->SetBackgroundColour(wxColour(100,100,100));
@@ -441,7 +445,7 @@ void ControlPanel::OntestButton(wxCommandEvent &event){
             activeboard->setState(command);
             displayPanel->SetBackgroundColour(*wxRED);
             displayPanel->Refresh();
-            displayPanel->Update();
+            displayPanel->Update(); 
             my_sleep(500);
         }
     }
@@ -450,7 +454,7 @@ void ControlPanel::OntestButton(wxCommandEvent &event){
 
 void ControlPanel::OnbrowseButton(wxCommandEvent &event){
     wxFileDialog openFileDialog(this, _("Open file"), "", "",
-                                "All files (*.*)|*.*", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+                                "YAML files (*.yaml;*.yml)|*.yaml;*.yml", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
     if (openFileDialog.ShowModal() == wxID_CANCEL)
         return;
     wxString filePath = openFileDialog.GetPath();
@@ -458,16 +462,17 @@ void ControlPanel::OnbrowseButton(wxCommandEvent &event){
 }
 
 void ControlPanel::OnloadButton(wxCommandEvent &event){
-    if(filePath==m_filePathCtrl->GetValue().ToStdString()){
+    if(filePath==m_filePathCtrl->GetValue().ToStdString() && filePath != ""){
         wxMessageBox("File allready loaded", "Error", wxOK | wxICON_ERROR);
         return; 
     }
     else{
         filePath=m_filePathCtrl->GetValue().ToStdString();
         m_listCtrl2->DeleteAllItems();
+        m_listCtrl1->DeleteAllItems();
         programmerboards.clear();
     }
-    interpreter = new Interpreter(filePath);
+    interpreter = new Interpreter(filePath,&threadstarted);
     if(interpreter->get_errorString() != ""){
         wxMessageBox(interpreter->get_errorString(), "Error", wxOK | wxICON_ERROR);
     }
@@ -486,6 +491,10 @@ void ControlPanel::OnloadButton(wxCommandEvent &event){
             m_listCtrl1->SetItem(itemIndex, 3, wxString("False"));
         }
     }
+}
+
+void ControlPanel::OnblankButton(wxCommandEvent &event){
+    m_listCtrl2->InsertItem(m_listCtrl2->GetItemCount(), wxString("Free"));
 }
 
 void ControlPanel::OnaddButton(wxCommandEvent &event){
@@ -559,6 +568,14 @@ void ControlPanel::OnstartButton(wxCommandEvent &event){
         wxMessageBox("Failed to start threads", "Error", wxOK | wxICON_ERROR);
         return;
     }
+}
+
+void ControlPanel::CleanAfterProgrammer(){
+    if(threadstarted){
+        interpreter->stop_thread();
+    }
+    interpreter = NULL;
+    filePath="";
 }
 
 void ControlPanel::OnstopButton(wxCommandEvent &event){
@@ -690,6 +707,7 @@ wxBEGIN_EVENT_TABLE(ControlPanel, wxPanel)
     EVT_BUTTON(clearButtonID, ControlPanel::OnclearButton)
     EVT_BUTTON(startButtonID, ControlPanel::OnstartButton)
     EVT_BUTTON(stopButtonID, ControlPanel::OnstopButton)
+    EVT_BUTTON(blankButtonID,ControlPanel::OnblankButton)
     EVT_BUTTON(k1Id, ControlPanel::OnK1)
     EVT_BUTTON(k2Id, ControlPanel::OnK2)
     EVT_BUTTON(k3Id, ControlPanel::OnK3)

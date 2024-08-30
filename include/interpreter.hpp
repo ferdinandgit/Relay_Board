@@ -30,7 +30,7 @@ typedef struct{
 
 class Interpreter {
 public:
-    Interpreter(std::string file);
+    Interpreter(std::string file, bool* threadstarted);
     int match_conf_prog();
     int match_hardware(Serialrelay* board, std::string id);
     std::vector<config> get_conf();
@@ -41,12 +41,15 @@ public:
     int stop_thread();
     void unmap_all();
 
+
 private:
+
     YAML::Node prog;
     std::vector<config> configs;
     std::vector<boardprogram> boardprograms;
     std::vector<std::thread> threads;
-    std::atomic<bool> stopFlag;
+    bool stopFlag = false;
+    bool* threadstarted;
     std::string errorString = "";
 
     boardprogram parse_inst(const YAML::Node& instructions);

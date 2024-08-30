@@ -306,6 +306,7 @@ void MainFrame::OnTestMode(wxCommandEvent& event){
         int id = wxAtoi(relaylist->GetItemText(relaylist->GetTopItem(),0));
         Serialrelay* activeboard = controlpanel->GetOpenBoards()[id];
         relayboard boardtype = activeboard->getType();
+        controlpanel->AssignToBoard(id);
         controlpanel->CreateTestlayout();
         controlpanel->CreateTestControls(id,boardtype);
     }

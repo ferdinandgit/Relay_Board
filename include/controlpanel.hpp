@@ -31,6 +31,7 @@ public:
 
 private:
 
+    void CleanAfterProgrammer();
     void Relay1Controls(relayboard board);
     void Relay2Controls(relayboard board);
     void Relay4Controls(relayboard board);
@@ -45,6 +46,7 @@ private:
     void OnclearButton(wxCommandEvent &event);
     void OnstartButton(wxCommandEvent &event);
     void OnstopButton(wxCommandEvent &event);
+    void OnblankButton(wxCommandEvent &event);
     void OnK1(wxCommandEvent &event);
     void OnK2(wxCommandEvent &event);
     void OnK3(wxCommandEvent &event);
@@ -63,7 +65,6 @@ private:
     void OnK16(wxCommandEvent &event);
     
     Serialrelay* activeboard;
-    Interpreter* interpreter; 
     DrawingCanva* canva;
     wxPanel* programmerpanel;
     wxPanel* testpanel;
@@ -72,7 +73,9 @@ private:
     std::vector<Serialrelay*> programmerboards;
     int selecteditem = 0;
     std::string filePath;
-    
+    bool threadstarted = false; 
+   
+
     wxButton* testButton;
     wxButton* browseButton;
     wxButton* loadButton;
@@ -80,6 +83,7 @@ private:
     wxButton* clearButton;
     wxButton* startButton;
     wxButton* stopButton;
+    wxButton* blankButton;
     wxButton* k1;
     wxButton* k2;
     wxButton* k3;
@@ -120,6 +124,7 @@ private:
     wxListCtrl* m_listCtrl1;
     wxListCtrl* m_listCtrl2;
 
+    Interpreter* interpreter; 
     wxDECLARE_EVENT_TABLE();
 };
 
@@ -146,5 +151,6 @@ enum ControlpanelButtonId{
     clearButtonID = wxID_LAST + 25,
     startButtonID = wxID_LAST + 26,
     stopButtonID  = wxID_LAST + 27,
-    browseButtonID = wxID_LAST + 28
+    browseButtonID = wxID_LAST + 28,
+    blankButtonID = wxID_LAST +29
 };

@@ -5,10 +5,11 @@
 #include <regex>
 #include <serialrelay.hpp>
 #include <thread>
-#include <atomic>
+
 bool validateYAML(const YAML::Node& node);
 
-Interpreter::Interpreter(std::string file) : stopFlag(false) {
+Interpreter::Interpreter(std::string file,bool* threadstarted){
+    this->threadstarted=threadstarted;
     try{
         prog = YAML::LoadFile(file);
         if(!validateYAML(prog)){
@@ -142,7 +143,6 @@ void Interpreter::loop_command(boardprogram prog) {
             else {
                 if(inst_to_command(prog, k)!=1){
                     errorString = "Error : " + prog.id + " Failed";
-                    stopFlag = true;
                     return;   
                 }
             }
@@ -158,7 +158,6 @@ void Interpreter::no_loop_command(boardprogram prog) {
         else {
             if(inst_to_command(prog, k)!=1){
                 errorString = "Error : " + prog.id + " Failed";
-                stopFlag = true;
                 return;   
             }
         }
@@ -226,6 +225,7 @@ int Interpreter::create_thread() {
 
 int Interpreter::start_thread() {
     stopFlag = false;
+    *threadstarted = true; 
     for (auto& th : threads) {
         if (th.joinable()) {
             th.detach();
@@ -236,6 +236,7 @@ int Interpreter::start_thread() {
 
 int Interpreter::stop_thread() {
     stopFlag = true;
+    *threadstarted=false;
     return 1;
 }
 
