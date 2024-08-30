@@ -69,7 +69,9 @@ private:
     wxPanel* testpanel;
     wxPanel* displayPanel;
     std::vector<Serialrelay*> openboards;
-    int selecteditem;
+    std::vector<Serialrelay*> programmerboards;
+    int selecteditem = 0;
+    std::string filePath;
     
     wxButton* testButton;
     wxButton* browseButton;

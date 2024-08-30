@@ -242,6 +242,11 @@ int Interpreter::stop_thread() {
 std::string Interpreter::get_errorString(){
     return errorString;
 }
+void Interpreter::unmap_all(){
+    for(int k=0;k<boardprograms.size();k++){
+        boardprograms[k].board=NULL;
+    }
+}
 
 
 bool Interpreter::validateYAML(const YAML::Node& node) {

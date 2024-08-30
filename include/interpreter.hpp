@@ -39,6 +39,7 @@ public:
     int create_thread();
     int start_thread();
     int stop_thread();
+    void unmap_all();
 
 private:
     YAML::Node prog;

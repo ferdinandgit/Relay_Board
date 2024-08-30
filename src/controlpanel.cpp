@@ -66,8 +66,12 @@ void ControlPanel::CreateProgrammerControls(){
     m_listCtrl1->InsertColumn(1, "Relaynumber");
     m_listCtrl1->InsertColumn(2, "Timebase");
     m_listCtrl1->InsertColumn(3, "loop");
-    m_listCtrl2->InsertColumn(0, "Id");
-    m_listCtrl2->InsertColumn(0, "Type");
+
+    m_listCtrl2->InsertColumn(0, _("id"), wxLIST_FORMAT_LEFT, 30);
+    m_listCtrl2->InsertColumn(1, _("port"),wxLIST_FORMAT_LEFT,50);
+    m_listCtrl2->InsertColumn(2, _("type"), wxLIST_FORMAT_LEFT, 100);
+    m_listCtrl2->InsertColumn(3, _("relay number"), wxLIST_FORMAT_LEFT, 100);
+    m_listCtrl2->InsertColumn(4, _("baudrate"), wxLIST_FORMAT_LEFT, 100);
 
     // Create a sizer to hold the titles and lists
     wxBoxSizer* listSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -84,8 +88,8 @@ void ControlPanel::CreateProgrammerControls(){
     listSizer->Add(rightListSizer, 1, wxEXPAND | wxALL, 5);     // Add right list and title
 
     // Create the Start and Stop buttons
-    startButton = new wxButton(programmerpanel, wxID_ANY, "Start", wxDefaultPosition, wxSize(80, 25));
-    stopButton = new wxButton(programmerpanel, wxID_ANY, "Stop", wxDefaultPosition, wxSize(80, 25));
+    startButton = new wxButton(programmerpanel,startButtonID, "Start", wxDefaultPosition, wxSize(80, 25));
+    stopButton = new wxButton(programmerpanel,stopButtonID, "Stop", wxDefaultPosition, wxSize(80, 25));
 
     // Create a sizer for the Start and Stop buttons
     wxBoxSizer* buttonSizer2 = new wxBoxSizer(wxHORIZONTAL);
@@ -454,7 +458,15 @@ void ControlPanel::OnbrowseButton(wxCommandEvent &event){
 }
 
 void ControlPanel::OnloadButton(wxCommandEvent &event){
-    std::string filePath = m_filePathCtrl->GetValue().ToStdString();
+    if(filePath==m_filePathCtrl->GetValue().ToStdString()){
+        wxMessageBox("File allready loaded", "Error", wxOK | wxICON_ERROR);
+        return; 
+    }
+    else{
+        filePath=m_filePathCtrl->GetValue().ToStdString();
+        m_listCtrl2->DeleteAllItems();
+        programmerboards.clear();
+    }
     interpreter = new Interpreter(filePath);
     if(interpreter->get_errorString() != ""){
         wxMessageBox(interpreter->get_errorString(), "Error", wxOK | wxICON_ERROR);
@@ -477,22 +489,80 @@ void ControlPanel::OnloadButton(wxCommandEvent &event){
 }
 
 void ControlPanel::OnaddButton(wxCommandEvent &event){
-    Serialrelay* selectedboard = openboards[selecteditem];
-    long itemIndex = m_listCtrl2->InsertItem(m_listCtrl2->GetItemCount(), wxString(std::to_string(selectedboard->getId())));
-    
-
+    if(m_listCtrl1->IsEmpty()){
+        wxMessageBox("Please load a program file before mapping", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
+    Serialrelay* selectedboard;
+    if(openboards.empty()){
+        wxMessageBox("Please connect a board", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
+    selectedboard = openboards[selecteditem];
+    if(m_listCtrl1->GetItemCount()==m_listCtrl2->GetItemCount()){
+        wxMessageBox("All boards mapped", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
+        if(std::binary_search(programmerboards.begin(), programmerboards.end(), selectedboard)){
+        wxMessageBox("Already mapped", "Error", wxOK | wxICON_ERROR);
+        return; 
+    }
+    if(wxAtoi(m_listCtrl1->GetItemText(m_listCtrl2->GetItemCount(),1))!=selectedboard->getRelayNumber()){
+        wxMessageBox("Hardware device not compatible", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
+    programmerboards.push_back(selectedboard);
+    if(selectedboard!=NULL){
+        long itemIndex = m_listCtrl2->InsertItem(m_listCtrl2->GetItemCount(), wxString(std::to_string(selectedboard->getId())));
+        m_listCtrl2->SetItem(itemIndex, 1, wxString(selectedboard->getPort()));
+        m_listCtrl2->SetItem(itemIndex, 3, wxString(std::to_string(selectedboard->getRelayNumber())));
+        m_listCtrl2->SetItem(itemIndex, 4, wxString(std::to_string(selectedboard->getSpeed())));
+        switch(selectedboard->getType()){
+            case USBRELAY:
+                m_listCtrl2->SetItem(itemIndex, 2, wxString("USB-RELAY"));
+            break;
+            case USBBRELAY:
+                m_listCtrl2->SetItem(itemIndex, 2, wxString("USBB-RELAY"));
+            break;
+            case USBMRELAY: 
+                m_listCtrl2->SetItem(itemIndex, 2, wxString("USBM-RELAY"));
+            break;
+            case USBCRELAY:
+                m_listCtrl2->SetItem(itemIndex, 2, wxString("USBC-RELAY"));
+            break;  
+        }
+    }
+    else{
+        wxMessageBox("Please select or connect a board", "Error", wxOK | wxICON_ERROR);
+    }
 }
 
 void ControlPanel::OnclearButton(wxCommandEvent &event){
-
+    m_listCtrl2->DeleteAllItems();
+    programmerboards.clear();
+    interpreter->unmap_all();
 }
 
 void ControlPanel::OnstartButton(wxCommandEvent &event){
-
+    std::vector<boardprogram> programs = interpreter->get_boardprogram();
+    for(int k=0;k<programmerboards.size();k++){
+        if(interpreter->match_hardware(programmerboards[k],programs[k].id)!=1){
+            wxMessageBox("Failed to match program with hardware", "Error", wxOK | wxICON_ERROR);
+            return;
+        }
+    }
+    if(interpreter->create_thread()!=1){
+        wxMessageBox("Failed to create threads", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
+    if(interpreter->start_thread()!=1){
+        wxMessageBox("Failed to start threads", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
 }
 
 void ControlPanel::OnstopButton(wxCommandEvent &event){
-
+    interpreter->stop_thread();
 }
 
 
