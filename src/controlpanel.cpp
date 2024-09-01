@@ -494,7 +494,17 @@ void ControlPanel::OnloadButton(wxCommandEvent &event){
 }
 
 void ControlPanel::OnblankButton(wxCommandEvent &event){
+     if(m_listCtrl1->IsEmpty()){
+        wxMessageBox("Please load a program file before mapping", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
+    if(m_listCtrl1->GetItemCount()==m_listCtrl2->GetItemCount()){
+        wxMessageBox("All boards mapped", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
+    Serialrelay* freeboard = NULL;
     m_listCtrl2->InsertItem(m_listCtrl2->GetItemCount(), wxString("Free"));
+    programmerboards.push_back(freeboard);
 }
 
 void ControlPanel::OnaddButton(wxCommandEvent &event){
@@ -553,6 +563,10 @@ void ControlPanel::OnclearButton(wxCommandEvent &event){
 }
 
 void ControlPanel::OnstartButton(wxCommandEvent &event){
+    if(m_listCtrl2->IsEmpty()){
+        wxMessageBox("No hardware match defined", "Error", wxOK | wxICON_ERROR);
+        return;
+    }
     std::vector<boardprogram> programs = interpreter->get_boardprogram();
     for(int k=0;k<programmerboards.size();k++){
         if(interpreter->match_hardware(programmerboards[k],programs[k].id)!=1){
@@ -579,7 +593,12 @@ void ControlPanel::CleanAfterProgrammer(){
 }
 
 void ControlPanel::OnstopButton(wxCommandEvent &event){
-    interpreter->stop_thread();
+    if(threadstarted){  
+        interpreter->stop_thread();
+    }
+    else{
+        wxMessageBox("No program to stop", "Error", wxOK | wxICON_ERROR);
+    }
 }
 
 
