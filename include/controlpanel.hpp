@@ -11,7 +11,7 @@ class ControlPanel : public wxPanel {
 
 public:
 
-    ControlPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size);
+    ControlPanel(wxWindow *parent,wxWindowID id, const wxPoint &pos, const wxSize &size);
     void CreateManuallayout(int relaynumber,relayboard board);
     void CreateManualControls(int relaynumber,relayboard board);
     void CreateTestlayout();
@@ -26,18 +26,22 @@ public:
     void AssignToBoard(int id);
     void AssignToNull();
     void SelectedItem(int id);
+    void SetRelayList(wxListCtrl* relaylist);
     
      
 
 private:
-
+    
     void CleanAfterProgrammer();
     void Relay1Controls(relayboard board);
     void Relay2Controls(relayboard board);
     void Relay4Controls(relayboard board);
     void Relay8Controls(relayboard board);
     void Relay16Contols(relayboard board);
+    void ToggleSafe(int relay);
+    int OnOffSafe(int relay,int state);
     void UpdateState();
+    void CleanupBoard();
 
     void OntestButton(wxCommandEvent &event);
     void OnbrowseButton(wxCommandEvent &event);
@@ -123,6 +127,8 @@ private:
 
     wxListCtrl* m_listCtrl1;
     wxListCtrl* m_listCtrl2;
+    wxListCtrl* m_listCtrl3;
+    wxListCtrl* relaylist;
 
     Interpreter* interpreter; 
     wxDECLARE_EVENT_TABLE();

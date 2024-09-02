@@ -4,13 +4,18 @@
 #include <wx/listctrl.h>
 #include <drawingcanva.hpp>
 #include <wx/grid.h>
+#include <wx/event.h>
 #include <interpreter.hpp>
+#include <thread>
+#include <chrono>
 
-
-ControlPanel::ControlPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size): wxPanel(parent, id, pos, size){
+ControlPanel::ControlPanel (wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size): wxPanel(parent, id, pos, size){
     this->SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
 
+void ControlPanel::SetRelayList(wxListCtrl* relaylist){
+    this->relaylist = relaylist;
+}
 void ControlPanel::InitControlPanel(){
     this->SetBackgroundColour(wxColour(100,100,100));
     wxSizer *controlpanelsizer = new wxBoxSizer(wxVERTICAL);
@@ -51,7 +56,8 @@ void ControlPanel::CreateProgrammerControls(){
     // Create titles for the lists
     wxStaticText* title1 = new wxStaticText(programmerpanel, wxID_ANY, "Program Board ID", wxDefaultPosition, wxDefaultSize);
     wxStaticText* title2 = new wxStaticText(programmerpanel, wxID_ANY, "Hardware Board", wxDefaultPosition, wxDefaultSize);
-
+    wxStaticText* title3 = new wxStaticText(programmerpanel, wxID_ANY, "  ", wxDefaultPosition, wxDefaultSize);
+    
     // Create sizers to align the Load, Add, and Clear buttons above the lists
     wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
     buttonSizer->Add(loadButton, 0, wxALL, 5);    // Align with left list
@@ -63,12 +69,16 @@ void ControlPanel::CreateProgrammerControls(){
     // Create the list controls
     m_listCtrl1 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(200, 150), wxLC_REPORT);
     m_listCtrl2 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(200, 150), wxLC_REPORT);
+    
+    m_listCtrl3 = new wxListCtrl(programmerpanel, wxID_ANY, wxDefaultPosition, wxSize(30, 150), wxLC_REPORT | wxLC_SINGLE_SEL);
+    m_listCtrl3->InsertColumn(0, "->", wxLIST_FORMAT_CENTRE,25);
+
 
     // Add columns to the list controls
     m_listCtrl1->InsertColumn(0, "Name");
     m_listCtrl1->InsertColumn(1, "Relaynumber");
     m_listCtrl1->InsertColumn(2, "Timebase");
-    m_listCtrl1->InsertColumn(3, "loop");
+    m_listCtrl1->InsertColumn(3, "loop"); 
 
     m_listCtrl2->InsertColumn(0, _("id"), wxLIST_FORMAT_LEFT, 30);
     m_listCtrl2->InsertColumn(1, _("port"),wxLIST_FORMAT_LEFT,50);
@@ -80,15 +90,22 @@ void ControlPanel::CreateProgrammerControls(){
     wxBoxSizer* listSizer = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* leftListSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* rightListSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* midListSizer = new wxBoxSizer(wxVERTICAL);
+    
+
 
     leftListSizer->Add(title1, 0, wxALIGN_LEFT | wxALL, 5);     // Add title above the left list
     leftListSizer->Add(m_listCtrl1, 1, wxEXPAND | wxALL, 5);    // Add the left list
 
     rightListSizer->Add(title2, 0, wxALIGN_LEFT | wxALL, 5);    // Add title above the right list
     rightListSizer->Add(m_listCtrl2, 1, wxEXPAND | wxALL, 5);   // Add the right list
+   
+    midListSizer->Add(title3, 0, wxALIGN_LEFT | wxALL, 5);
+    midListSizer->Add(m_listCtrl3, 1, wxTOP | wxBOTTOM , 5);
 
-    listSizer->Add(leftListSizer, 1, wxEXPAND | wxALL, 5);      // Add left list and title
-    listSizer->Add(rightListSizer, 1, wxEXPAND | wxALL, 5);     // Add right list and title
+    listSizer->Add(leftListSizer, 1, wxEXPAND | wxLEFT | wxTOP | wxBOTTOM, 5);    // Add left list and title
+    listSizer->Add(midListSizer, 0, wxEXPAND | wxTOP | wxBOTTOM , 5);   
+    listSizer->Add(rightListSizer, 1, wxEXPAND | wxRIGHT | wxTOP | wxBOTTOM, 5);     // Add right list and title
 
     // Create the Start and Stop buttons
     startButton = new wxButton(programmerpanel,startButtonID, "Start", wxDefaultPosition, wxSize(80, 25));
@@ -417,39 +434,73 @@ void ControlPanel::UpdateState(){
     for(int k=0;k<activeboard->getRelayNumber();k++){
         wxStaticText* kstate = relaystatus[k];
         if(status[k]){
+            kstate->SetForegroundColour(wxColour(0,255,0));
             kstate->SetLabel("ON");
         }
         else{
-            kstate->SetLabel("OFF");
+            kstate->SetForegroundColour(wxColour(255,0,0));
+            kstate->SetLabel("OFF");     
         }
     }
 }
 
-void ControlPanel::OntestButton(wxCommandEvent &event){
-    std::vector<int> command(16,0);
-    if(activeboard == NULL){
+
+void ControlPanel::OntestButton(wxCommandEvent& event) {
+    if (activeboard == nullptr) {
         wxMessageBox("No board to test", "Error", wxOK | wxICON_ERROR);
+        return;
     }
-    else{
-        for(int k=0;k<activeboard->getRelayNumber();k++){
-            std::string relay = "K"+std::to_string(k+1);
-            testrelaytext->SetLabel(relay);
-            Layout();
-            command[k]=1;
-            activeboard->setState(command);
-            displayPanel->SetBackgroundColour(*wxGREEN);
-            displayPanel->Refresh();
-            displayPanel->Update();
-            my_sleep(500);
-            command[k]=0;
-            activeboard->setState(command);
-            displayPanel->SetBackgroundColour(*wxRED);
-            displayPanel->Refresh();
-            displayPanel->Update(); 
-            my_sleep(500);
+
+    std::thread testThread([this]() {
+        std::vector<int> commandtest(16, 0);
+        for (int k = 0; k < activeboard->getRelayNumber(); ++k) {
+            std::string relay = "K" + std::to_string(k + 1);
+
+            // Update UI safely using wxCallAfter
+            CallAfter([this, relay]() {
+                testrelaytext->SetLabel(relay);
+                Layout();
+            });
+
+            commandtest[k] = 1;
+            if (activeboard->setState(commandtest) != 1) {
+                CallAfter([this]() {
+                    wxMessageBox("Check hardware board disconnected", "Error", wxOK | wxICON_ERROR);
+                    // Perform cleanup or reset operations
+                    this->CleanupBoard();
+                });
+                break;
+            }
+
+            CallAfter([this]() {
+                displayPanel->SetBackgroundColour(*wxGREEN);
+                displayPanel->Refresh();
+                Layout();
+            });
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+            commandtest[k] = 0;
+            if (activeboard->setState(commandtest) != 1) {
+                CallAfter([this]() {
+                    wxMessageBox("Check hardware board disconnected", "Error", wxOK | wxICON_ERROR);
+                    // Perform cleanup or reset operations
+                    this->CleanupBoard();
+                });
+                break;
+            }
+
+            CallAfter([this]() {
+                displayPanel->SetBackgroundColour(*wxRED);
+                displayPanel->Refresh();
+                Layout();
+            });
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
-    }
-        
+    });
+
+    testThread.detach();
 }
 
 void ControlPanel::OnbrowseButton(wxCommandEvent &event){
@@ -504,6 +555,7 @@ void ControlPanel::OnblankButton(wxCommandEvent &event){
     }
     Serialrelay* freeboard = NULL;
     m_listCtrl2->InsertItem(m_listCtrl2->GetItemCount(), wxString("Free"));
+    m_listCtrl3->InsertItem(0,"->");
     programmerboards.push_back(freeboard);
 }
 
@@ -550,6 +602,7 @@ void ControlPanel::OnaddButton(wxCommandEvent &event){
                 m_listCtrl2->SetItem(itemIndex, 2, wxString("USBC-RELAY"));
             break;  
         }
+        m_listCtrl3->InsertItem(0,"->");
     }
     else{
         wxMessageBox("Please select or connect a board", "Error", wxOK | wxICON_ERROR);
@@ -558,6 +611,7 @@ void ControlPanel::OnaddButton(wxCommandEvent &event){
 
 void ControlPanel::OnclearButton(wxCommandEvent &event){
     m_listCtrl2->DeleteAllItems();
+    m_listCtrl3->DeleteAllItems();
     programmerboards.clear();
     interpreter->unmap_all();
 }
@@ -601,121 +655,158 @@ void ControlPanel::OnstopButton(wxCommandEvent &event){
     }
 }
 
+void ControlPanel::ToggleSafe(int relay){
+    std::vector<int> command = activeboard->getState();
+    command[relay-1]=!command[relay-1];
+    if(activeboard->setState(command)!=1){
+        wxMessageBox("Check hardware board disconnected", "Error", wxOK | wxICON_ERROR);
+        for(auto board : openboards){
+            if(board==activeboard){
+                int id = board->getId();
+                long itemIndex = -1;
+                while ((itemIndex = relaylist->GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_DONTCARE)) != wxNOT_FOUND){
+                    wxListItem item;
+                    item.SetId(itemIndex);
+                    item.SetMask(wxLIST_MASK_TEXT);
+                    if(id==wxAtoi(relaylist->GetItemText(itemIndex,0))){
+                        break;
+                    }
+                }
+                relaylist->DeleteItem(itemIndex);   
+                this->GetOpenBoards()[id]->closeCom();
+                this->RmBoard(id);
+                this->CreateManuallayout(0,NOBOARD);
+                this->CreateManualControls(0,NOBOARD);
+                break;
+            }
+        }
+    }
+    else{
+        UpdateState();
+    }
+}
+
+int ControlPanel::OnOffSafe(int relay,int state){
+    std::vector<int> command(16,0);
+    command[relay-1]=state;
+    if(activeboard->setState(command)!=1){
+        wxMessageBox("Check hardware board disconnected", "Error", wxOK | wxICON_ERROR);
+        for(auto board : openboards){
+            if(board==activeboard){
+                int id = board->getId();
+                long itemIndex = -1;
+                while ((itemIndex = relaylist->GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_DONTCARE)) != wxNOT_FOUND){
+                    wxListItem item;
+                    item.SetId(itemIndex);
+                    item.SetMask(wxLIST_MASK_TEXT);
+                    if(id==wxAtoi(relaylist->GetItemText(itemIndex,0))){
+                        break;
+                    }
+                }
+                relaylist->DeleteItem(itemIndex);   
+                this->GetOpenBoards()[id]->closeCom();
+                this->RmBoard(id);
+                this->CreateTestlayout();
+                this->CreateTestControls(0,NOBOARD);
+                this->AssignToNull();
+                break;
+            }
+        }
+        return -1;
+    }
+    return 1;
+}
 
 void ControlPanel::OnK1(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[0]=!command[0];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(1);
 }
 
 void ControlPanel::OnK2(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[1]=!command[1];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(2);
 }
 
 void ControlPanel::OnK3(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[2]=!command[2];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(3);
 }
 
 void ControlPanel::OnK4(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[3]=!command[3];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(4);
 }
 
 void ControlPanel::OnK5(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[4]=!command[4];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(5);
 }
 
 void ControlPanel::OnK6(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[5]=!command[5];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(6);
 }
 
 void ControlPanel::OnK7(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[6]=!command[6];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(7);
 }
 
 void ControlPanel::OnK8(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[7]=!command[7];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(8);
 }
 
 void ControlPanel::OnK9(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[8]=!command[8];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(9);
 }
 
 void ControlPanel::OnK10(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[9]=!command[9];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(10);
 }
 
 void ControlPanel::OnK11(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[10]=!command[10];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(11);
 }
 
 void ControlPanel::OnK12(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[11]=!command[11];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(12);
 }
 
 void ControlPanel::OnK13(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[12]=!command[12];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(13);
 }
 
 void ControlPanel::OnK14(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[13]=!command[13];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(14);
 }
 
 void ControlPanel::OnK15(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[14]=!command[14];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(15);
 }
 
 void ControlPanel::OnK16(wxCommandEvent &event){
-    std::vector<int> command = activeboard->getState();
-    command[15]=!command[15];
-    activeboard->setState(command);
-    UpdateState();
+    ToggleSafe(16);
 }
 
 void ControlPanel::SelectedItem(int id){
     selecteditem=id;
+}
+
+void ControlPanel::CleanupBoard() {
+    for (auto board : openboards) {
+        if (board == activeboard) {
+            int id = board->getId();
+            long itemIndex = -1;
+            while ((itemIndex = relaylist->GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_DONTCARE)) != wxNOT_FOUND) {
+                wxListItem item;
+                item.SetId(itemIndex);
+                item.SetMask(wxLIST_MASK_TEXT);
+                if (id == wxAtoi(relaylist->GetItemText(itemIndex, 0))) {
+                    relaylist->DeleteItem(itemIndex);
+                    break;
+                }
+            }
+            GetOpenBoards()[id]->closeCom();
+            RmBoard(id);
+            CreateTestlayout();
+            CreateTestControls(0, NOBOARD);
+            AssignToNull();
+            break;
+        }
+    }
 }
 
 wxBEGIN_EVENT_TABLE(ControlPanel, wxPanel)

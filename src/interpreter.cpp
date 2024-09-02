@@ -5,6 +5,9 @@
 #include <regex>
 #include <serialrelay.hpp>
 #include <thread>
+#include <wx/wx.h>
+#include <wx/gbsizer.h>
+#include <wx/listctrl.h>
 
 bool validateYAML(const YAML::Node& node);
 
@@ -116,6 +119,9 @@ int Interpreter::match_conf_prog() {
 }
 
 int Interpreter::match_hardware(Serialrelay* board, std::string id) {
+    if(board==NULL){
+        return 1;
+    }
     for (size_t k = 0; k < boardprograms.size(); k++) {
         if (boardprograms[k].id == id && boardprograms[k].configuration.relaynumber == board->getRelayNumber()) {
             boardprograms[k].board = board;
@@ -224,6 +230,8 @@ int Interpreter::create_thread() {
 }
 
 int Interpreter::start_thread() {
+    stopFlag = true;
+    my_sleep(1000); //time for other threads to stop;
     stopFlag = false;
     *threadstarted = true; 
     for (auto& th : threads) {

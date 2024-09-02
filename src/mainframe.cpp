@@ -141,9 +141,10 @@ void MainFrame::CreateControls(){
     this->relaylist->InsertColumn(2, _("type"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(3, _("relay number"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(4, _("baudrate"), wxLIST_FORMAT_LEFT, 800);
+    controlpanel->SetRelayList(relaylist);
+    
+
 }
-
-
 
 //Event Command
 

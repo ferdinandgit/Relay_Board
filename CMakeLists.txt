@@ -105,11 +105,12 @@ if(WIN32)
     set(CPACK_PACKAGE_VERSION "1.0.0")
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Seeit Relay Controller Installer")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Seeit Relay Controller")
+    set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/ressources/prog.ico")
     install(TARGETS main DESTINATION bin)
     install(FILES ${HIDRELAY_DLL_PATH} DESTINATION bin)
     install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/iconmanual.bmp DESTINATION bin)
     install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/logo.bmp DESTINATION bin)
     install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/prog.bmp DESTINATION bin)
     install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/test.bmp DESTINATION bin)
-
+    
 endif()

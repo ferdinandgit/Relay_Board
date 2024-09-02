@@ -1,6 +1,9 @@
 #pragma once 
 #include<string>
 #include<vector>
+#include <wx/wx.h>
+#include <wx/gbsizer.h>
+#include <wx/listctrl.h>
 #include <yaml-cpp/yaml.h>
 #include <serialrelay.hpp>
 #include <thread>
