@@ -230,8 +230,6 @@ int Interpreter::create_thread() {
 }
 
 int Interpreter::start_thread() {
-    stopFlag = true;
-    my_sleep(1000); //time for other threads to stop;
     stopFlag = false;
     *threadstarted = true; 
     for (auto& th : threads) {
