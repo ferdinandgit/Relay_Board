@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
-project(Seeit_Relay
+project(DriveRelay
   LANGUAGES CXX
   VERSION 1.0
 )
@@ -48,20 +48,15 @@ file(GLOB_RECURSE SOURCES
             ${CMAKE_CURRENT_SOURCE_DIR}/src/drawingcanva.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/serialrelay.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/app.rc
             )
 
 
 if(APPLE)
-    # create bundle on apple compiles
-    add_executable(main MACOSX_BUNDLE ${SOURCES})
-
-    # Set a custom plist file for the app bundle - needed for Mac OS Retina display
-    set_target_properties(main PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
+    add_executable(DriveRelay MACOSX_BUNDLE ${SOURCES})
+    set_target_properties(DriveRelay PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
 else()
-    # the WIN32 is needed for Windows in order for it to look for WinMain
-    # instead of the main function. This is ignored on other systems,
-    # so it works on all platforms
-    add_executable(main WIN32 ${SOURCES} main.exe.manifest)
+    add_executable(DriveRelay WIN32 ${SOURCES} main.exe.manifest)
 endif()
 
 if(WIN32)
@@ -81,46 +76,47 @@ else()
     set_target_properties( hidusbrelay PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/Unix/usb_relay_device.so )
 endif()
 
-target_include_directories(main PUBLIC 
+target_include_directories(DriveRelay PUBLIC 
                           ${CMAKE_CURRENT_SOURCE_DIR}/include
                           )                       
 
 
 if(WIN32)
-    target_link_libraries(main PUBLIC wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH} yaml-cpp::yaml-cpp)
-    add_custom_command(TARGET main POST_BUILD
+    target_link_libraries(DriveRelay PUBLIC wxcore wxnet serial ${HIDRELAY_LIBRARY_PATH} yaml-cpp::yaml-cpp)
+    add_custom_command(TARGET DriveRelay POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${HIDRELAY_DLL_PATH}"
-        $<TARGET_FILE_DIR:main>)
+        $<TARGET_FILE_DIR:DriveRelay>)
 else()
-    target_link_libraries(main PUBLIC wxcore wxnet serial hidusbrelay yaml-cpp::yaml-cpp)
+    target_link_libraries(DriveRelay PUBLIC wxcore wxnet serial hidusbrelay yaml-cpp::yaml-cpp)
 endif()
 
+# Installation rules
+install(TARGETS DriveRelay DESTINATION bin)
+install(FILES ${HIDRELAY_DLL_PATH} DESTINATION bin)
+install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/iconmanual.bmp DESTINATION bin)
+install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/logo.bmp DESTINATION bin)
+install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/prog.bmp DESTINATION bin)
+install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/test.bmp DESTINATION bin)
+install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/prog.ico DESTINATION bin)
 
-if(WIN32)
-    include(CPack)
-    set(CPACK_GENERATOR "NSIS")
-    set(CPACK_PACKAGE_NAME "DriveRelay")
-    set(CPACK_PACKAGE_VENDOR "SEEIT")
-    set(CPACK_PACKAGE_VERSION "1.0.0")
-    set(CPACK_PACKAGE_CONTACT "contacy@seeit.fr")
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "DriveRelay Installer")
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "DriveRelay")
-    set(CPACK_NSIS_MUI_ICON ${CMAKE_SOURCE_DIR}/ressources/icons/prog.ico)
-    install(TARGETS main DESTINATION bin)
-    install(FILES ${HIDRELAY_DLL_PATH} DESTINATION bin)
-    install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/iconmanual.bmp DESTINATION bin)
-    install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/logo.bmp DESTINATION bin)
-    install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/prog.bmp DESTINATION bin)
-    install(FILES ${CMAKE_SOURCE_DIR}/ressources/icons/test.bmp DESTINATION bin)
+# Include CPack for packaging
 
-    set(CPACK_NSIS_CREATE_ICONS  ${CMAKE_SOURCE_DIR}/ressources/icons/prog.ico)
-    set(CPACK_NSIS_STARTMENU_SUBDIR "DriveRelay")
-    set(CPACK_NSIS_STARTMENU_FOLDER "DriveRelay")
-    set(CPACK_NSIS_DESKTOP_SHORTCUT "main.exe")
-    set(CPACK_NSIS_STARTMENU_SHORTCUT "main.exe")
+# Basic package information
+set(CPACK_GENERATOR "NSIS")
+set(CPACK_PACKAGE_NAME "DriveRelay")
+set(CPACK_PACKAGE_VENDOR "SEEIT")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_CONTACT "contact@seeit.fr")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "DriveRelay Installer")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "DriveRelay")
+set(CPACK_PACKAGE_EXECUTABLES "DriveRelay" "DriveRelay")
 
+# Set the NSIS script file path
+set(CPACK_NSIS_SCRIPT "${CMAKE_SOURCE_DIR}/MyInstaller.nsi")
 
- 
-    
-endif()
+# Set the installer icon
+set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/ressources/icons/prog.ico")
+
+# Include CPack settings
+include(CPack)

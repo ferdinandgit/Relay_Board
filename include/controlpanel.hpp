@@ -27,7 +27,7 @@ public:
     void AssignToNull();
     void SelectedItem(int id);
     void SetRelayList(wxListCtrl* relaylist);
-    
+    void SetTestStarted(bool*);
      
 
 private:
@@ -42,6 +42,7 @@ private:
     int OnOffSafe(int relay,int state);
     void UpdateState();
     void CleanupBoard();
+
 
     void OntestButton(wxCommandEvent &event);
     void OnbrowseButton(wxCommandEvent &event);
@@ -77,7 +78,8 @@ private:
     std::vector<Serialrelay*> programmerboards;
     int selecteditem = 0;
     std::string filePath;
-    bool threadstarted = false; 
+    bool threadstarted = false;
+    bool * teststarted;
    
 
     wxButton* testButton;

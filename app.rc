@@ -1,0 +1,4 @@
+#include "wx/msw/wx.rc"
+
+// Define the icon resource
+IDI_ICON1 ICON "ressources/icons/prog.ico"

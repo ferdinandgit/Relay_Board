@@ -78,7 +78,7 @@ void MainFrame::CreateControls(){
     manualmodebutton = new wxBitmapButton(menupanel,manualmodebuttonId,manualicon, wxPoint(0,0),buttonsize, 0);
     wxBitmap programmericon;
     programmericon.LoadFile("prog.bmp", wxBITMAP_TYPE_BMP);
-    progammermodebutton = new wxBitmapButton(menupanel,progammermodebuttonId,programmericon, wxPoint(buttonwidth,0),buttonsize, 0);
+    //progammermodebutton = new wxBitmapButton(menupanel,progammermodebuttonId,programmericon, wxPoint(buttonwidth,0),buttonsize, 0);
     wxBitmap testicon;
     testicon.LoadFile("test.bmp", wxBITMAP_TYPE_BMP);
     testmodebutton = new wxBitmapButton(menupanel,testmodebuttonId,testicon, wxPoint(buttonwidth*2,0),buttonsize, 0);
@@ -86,7 +86,7 @@ void MainFrame::CreateControls(){
     logo.LoadFile("logo.bmp", wxBITMAP_TYPE_BMP);
     logobutton = new wxBitmapButton(menupanel,logobuttonId,logo, wxPoint(buttonwidth*4,0),logosize, 0);
     menupanelsizer->Add(manualmodebutton,0,wxEXPAND|wxALL,1);
-    menupanelsizer->Add(progammermodebutton,0,wxEXPAND|wxALL,1);
+    //menupanelsizer->Add(progammermodebutton,0,wxEXPAND|wxALL,1);
     menupanelsizer->Add(testmodebutton,0,wxEXPAND|wxALL,1);
     menupanelsizer->AddStretchSpacer(1);
     menupanelsizer->Add(logobutton,0,wxEXPAND|wxALL,0);
@@ -142,6 +142,7 @@ void MainFrame::CreateControls(){
     this->relaylist->InsertColumn(3, _("relay number"), wxLIST_FORMAT_LEFT, 100);
     this->relaylist->InsertColumn(4, _("baudrate"), wxLIST_FORMAT_LEFT, 800);
     controlpanel->SetRelayList(relaylist);
+    controlpanel->SetTestStarted(&teststarted);
     
 
 }
@@ -305,6 +306,9 @@ void MainFrame::OnClear(wxCommandEvent& event){
 }
 
 void MainFrame::OnManualMode(wxCommandEvent& event){
+    if(teststarted){
+        return;
+    }
     manual=1;
     programmer=0;
     test=0;
@@ -325,6 +329,9 @@ void MainFrame::OnManualMode(wxCommandEvent& event){
 }
 
 void MainFrame::OnTestMode(wxCommandEvent& event){
+    if(teststarted){
+        return;
+    }
     manual=0;
     programmer=0;
     test=1;
@@ -345,6 +352,9 @@ void MainFrame::OnTestMode(wxCommandEvent& event){
 
 
 void MainFrame::OnProgrammerMode(wxCommandEvent& event){
+    if(teststarted){
+        return;
+    }
     manual=0;
     programmer=1;
     test=0;
@@ -404,9 +414,10 @@ void MainFrame::OnItemSelected(wxListEvent& event){
 
 void MainFrame::OnLogo(wxCommandEvent& event){
     wxString message = 
-            "SEEIT\n"
-            "Phone : 04 73 31 15 15\n"
-            "Email: contact@seeit.fr";
+            "DeviceRelay\n"
+            "Version : 1.0\n"            
+            "Copyright 1996-2026 SEEIT SARL\n";
+            "www.seeit.fr";
         wxMessageBox(message, "Contact Information", wxOK | wxICON_INFORMATION);
 }
 

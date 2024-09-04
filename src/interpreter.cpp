@@ -148,8 +148,7 @@ void Interpreter::loop_command(boardprogram prog) {
             } 
             else {
                 if(inst_to_command(prog, k)!=1){
-                    errorString = "Error : " + prog.id + " Failed";
-                    return;   
+                    errorString = "Error : " + prog.id + " Failed";   
                 }
             }
         }
@@ -163,8 +162,7 @@ void Interpreter::no_loop_command(boardprogram prog) {
         } 
         else {
             if(inst_to_command(prog, k)!=1){
-                errorString = "Error : " + prog.id + " Failed";
-                return;   
+                errorString = "Error : " + prog.id + " Failed";   
             }
         }
     }

@@ -29,6 +29,7 @@ private:
     int manual = 1;
     int programmer =0;
     int test = 0;
+    bool teststarted = false;
     onlinedev dev; 
 
     wxTimer *refreshtimer;

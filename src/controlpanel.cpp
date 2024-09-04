@@ -446,6 +446,10 @@ void ControlPanel::UpdateState(){
 
 
 void ControlPanel::OntestButton(wxCommandEvent& event) {
+    if(*teststarted){
+        return;
+    }
+    *teststarted = true;
     if (activeboard == nullptr) {
         wxMessageBox("No board to test", "Error", wxOK | wxICON_ERROR);
         return;
@@ -498,6 +502,7 @@ void ControlPanel::OntestButton(wxCommandEvent& event) {
 
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
+        *teststarted = false;
     });
 
     testThread.detach();
@@ -783,6 +788,10 @@ void ControlPanel::OnK16(wxCommandEvent &event){
 
 void ControlPanel::SelectedItem(int id){
     selecteditem=id;
+}
+
+void ControlPanel::SetTestStarted(bool* test){
+    teststarted=test;
 }
 
 void ControlPanel::CleanupBoard() {
